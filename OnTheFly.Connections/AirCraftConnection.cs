@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using OnTheFly.Models;
+using OnTheFly.Models.DTO;
 
 namespace OnTheFly.Connections
 {
@@ -12,34 +13,59 @@ namespace OnTheFly.Connections
             Database = client.GetDatabase("AirCraft");
         }
 
-        public void Insert(AirCraft airCraft)
+        public AirCraft Insert(AirCraftDTO airCraftDTO)
         {
+            Company company= new Company()
+            {
+                Address= airCraftDTO.Company.Address,
+                Cnpj= airCraftDTO.Company.Cnpj,
+                DtOpen= DateOnly.Parse(airCraftDTO.Company.DtOpen.Year + "/" + airCraftDTO.Company.DtOpen.Month + "/" + airCraftDTO.Company.DtOpen.Day),
+                Name= airCraftDTO.Company.Name,
+                NameOPT= airCraftDTO.Company.NameOPT,
+                Status = airCraftDTO.Company.Status
+            };
+            AirCraft airCraft = new AirCraft()
+            {
+                Capacity = airCraftDTO.Capacity,
+                Company = company,
+                RAB = airCraftDTO.RAB,
+                DtLastFlight = DateOnly.Parse(airCraftDTO.DtLastFlight.Year + "/" + airCraftDTO.DtLastFlight.Month + "/" + airCraftDTO.DtLastFlight.Day),
+                DtRegistry = DateOnly.Parse(airCraftDTO.DtRegistry.Year + "/" + airCraftDTO.DtRegistry.Month + "/" + airCraftDTO.DtRegistry.Day)
+            };
             var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             collection.InsertOne(airCraft);
+
+            return collection.Find(a => a.RAB == airCraftDTO.RAB).First();
         }
 
-        public List<AirCraft> FindAll()
+        public List<AirCraft>? FindAll()
         {
             var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
-            return collection.Find(a=>true).ToList();
+            return collection.Find<AirCraft>(a=>true).ToList();
         }
 
-        public void Delete(string rab)
+        public AirCraft? FindOne(string rab)
+        {
+            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
+            return collection.Find<AirCraft>(a => a.RAB==rab).First();
+        }
+
+        public AirCraft Delete(string rab)
         {
             var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             var collection2 = Database.GetCollection<AirCraft>("InactiveAirCraft");
 
-            var trash = collection.Find<AirCraft>(a=>a.RAB==rab).FirstOrDefault();
-
+            var trash= collection.FindOneAndDelete(a => a.RAB == rab);
             collection2.InsertOne(trash);
 
-            collection.FindOneAndDelete(a=> a.RAB==rab);
+            return trash;
         }
 
-        public void Update(string rab, AirCraft airCraft)
+        public AirCraft? Update(string rab, AirCraft airCraft)
         {
             var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             collection.ReplaceOne(a => a.RAB == rab, airCraft);
+            return collection.Find(a => a.RAB == airCraft.RAB).First();
         }
     }
 }
