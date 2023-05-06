@@ -5,6 +5,9 @@ namespace OnTheFly.Models
 {
     public class Flight
     {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
         public Airport Destiny { get; set; }
         public AirCraft Plane { get; set; }
         public int Sales { get; set; }
