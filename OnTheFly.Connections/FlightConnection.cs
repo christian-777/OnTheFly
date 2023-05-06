@@ -24,20 +24,20 @@ namespace OnTheFly.Connections
             return activeCollection.Find(a=>true).ToList();
         }
 
-        public void Delete(string id)
+        public void Delete(Airport destiny, AirCraft plane, DateTime departure)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActiveFlight");
             IMongoCollection<Flight> inactiveCollection = Database.GetCollection<Flight>("InactiveFlight");
 
-            Flight? trash = activeCollection.FindOneAndDelete(f => f.Id == id);
+            Flight? flight = activeCollection.FindOneAndDelete(f => f.Destiny == destiny && f.Plane == plane && f.Departure == departure);
 
-            if (trash != null) inactiveCollection.InsertOne(trash);
+            if (flight != null) inactiveCollection.InsertOne(flight);
         }
 
-        public void Update(string id, Flight flight)
+        public void Update(Airport destiny, AirCraft plane, DateTime departure, Flight flight)
         {
             var activeCollection = Database.GetCollection<Flight>("ActiveAirCraft");
-            activeCollection.ReplaceOne(f => f.Id  == id, flight);
+            activeCollection.ReplaceOne(f => f.Destiny == destiny && f.Plane == plane && f.Departure == departure, flight);
         }
     }
 }
