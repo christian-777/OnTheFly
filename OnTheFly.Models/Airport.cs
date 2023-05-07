@@ -26,8 +26,8 @@ namespace OnTheFly.Models
         [StringLength(20)]
         public string City { get; set; }
 
-        [BsonElement("country_id")]
-        [JsonPropertyName("country_id")]
+        [BsonElement("country")]
+        [JsonPropertyName("country")]
         [StringLength(2)]
         public string Country { get; set; }
     }
