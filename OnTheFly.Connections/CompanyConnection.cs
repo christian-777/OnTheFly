@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using OnTheFly.Models;
+using OnTheFly.Models.DTO;
 
 namespace OnTheFly.Connections
 {
@@ -14,28 +15,27 @@ namespace OnTheFly.Connections
             _dataBase = client.GetDatabase("Company");
         }
 
-        public bool Insert(Company company)
+        public Company Insert(CompanyDTO companyDTO)
         {
-            bool status = false;
-            if (company.Status is false)
+            Company company = new Company()
             {
-                var collection = _dataBase.GetCollection<Company>("Restricted Company");
-                collection.InsertOne(company);
-                status = true;
-            }
+                Address = companyDTO.Address,
+                Cnpj = companyDTO.Cnpj,
+                DtOpen = DateOnly.Parse(companyDTO.DtOpen.Year + "/" + companyDTO.DtOpen.Month + "/" + companyDTO.DtOpen.Day),
+                Name = companyDTO.Name,
+                NameOPT = companyDTO.NameOPT,
+                Status = companyDTO.Status
+            };
+            
+             var collection = _dataBase.GetCollection<Company>("ActiveCompany");
+             collection.InsertOne(company);
 
-            if ((company.Status is true) || (company.Status is null))
-            {
-                var collection = _dataBase.GetCollection<Company>("Unrestricted Company");
-                collection.InsertOne(company);
-                status = true;
-            }
-            return status;
+            return company;
         }
 
         public List<Company> FindAll()
         {
-            var collection = _dataBase.GetCollection<Company>("Unrestricted Company");
+            var collection = _dataBase.GetCollection<Company>("ActiveCompany");
             return collection.Find(x => true).ToList();
         }
 

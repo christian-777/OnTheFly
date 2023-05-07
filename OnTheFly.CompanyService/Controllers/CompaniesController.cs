@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using OnTheFly.Connections;
 using OnTheFly.Models;
+using OnTheFly.Models.DTO;
 using OnTheFly.Services;
 
 namespace OnTheFly.CompanyService.Controllers
@@ -20,36 +22,36 @@ namespace OnTheFly.CompanyService.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Company>>> GetCompany()
+        public async Task<ActionResult<string>> GetCompany()
         {
             if (_companyConnection.FindAll() == null)
             {
                 return NotFound();
             }
-            return _companyConnection.FindAll();
+            return JsonConvert.SerializeObject(_companyConnection.FindAll(), Formatting.Indented);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Company>> PostCompany(Company company)
+        public async Task<ActionResult<string>> PostCompany(CompanyDTO companyDTO)
         {
-            if (company.Address == null)
+            if (companyDTO.Address == null)
             {
                 return NotFound("A companhia não possui endereço!");
             }
 
-            if (company.Address.Street == null)
+            if (companyDTO.Address.Street == null)
             {
                 return NotFound("O endereço da companhia não possui o endereço completo!");
             }
 
-            Address address = _postOfficeService.GetAddress(company.Address.Zipcode).Result;
-            company.Address = address;
+            companyDTO.Status = null;
+            int aux = companyDTO.Address.Number;
 
-            _companyConnection.Insert(company);
+            Address address = _postOfficeService.GetAddress(companyDTO.Address.Zipcode).Result;
+            address.Number= aux;
+            companyDTO.Address = address;
 
-
-
-            return company;
+            return JsonConvert.SerializeObject(_companyConnection.Insert(companyDTO), Formatting.Indented);
         }
     }
 }

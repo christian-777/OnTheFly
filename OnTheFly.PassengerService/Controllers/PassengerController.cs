@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
+using Newtonsoft.Json;
 using OnTheFly.Connections;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
@@ -14,14 +15,14 @@ namespace OnTheFly.PassengerService.Controllers
     {
         private readonly PassengerConnection _passengerConnection;
         [HttpGet]
-        public ActionResult<List<Passenger>> GetAll()
+        public ActionResult<string> GetAll()
         {
-            return _passengerConnection.FindAll(); ;
+            return JsonConvert.SerializeObject(_passengerConnection.FindAll(), Formatting.Indented);
         }
         [HttpGet("{cpf}", Name = "GetCPF")]
-        public ActionResult<Passenger> GetBycpf(string cpf)
+        public ActionResult<string> GetBycpf(string cpf)
         {
-            return _passengerConnection.FindPassenger(cpf);
+            return JsonConvert.SerializeObject(_passengerConnection.FindPassenger(cpf), Formatting.Indented);
         }
         [HttpPost]
         public ActionResult Insert(PassengerDTO passengerdto)
