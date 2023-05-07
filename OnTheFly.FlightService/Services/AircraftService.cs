@@ -9,7 +9,7 @@ namespace OnTheFly.FlightService.Services
 
         public async Task<AirCraft> GetAircraft(string RAB)
         {
-            HttpResponseMessage res = await _httpClient.GetAsync("https://localhost:5000/ByIATA/" + RAB);
+            HttpResponseMessage res = await _httpClient.GetAsync("https://localhost:5000/" + RAB);
             if (!res.IsSuccessStatusCode) return new AirCraft();
 
             string content = await res.Content.ReadAsStringAsync();

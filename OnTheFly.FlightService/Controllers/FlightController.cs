@@ -29,6 +29,8 @@ namespace OnTheFly.FlightService.Controllers
             if (IATA == null || RAB == null || departure == null) return NoContent();
             Flight? flight = _flight.Get(IATA, RAB, departure.Value);
 
+            if (flight == null) return NotFound();
+
             return JsonConvert.SerializeObject(flight, Formatting.Indented);
         }
 
@@ -48,7 +50,8 @@ namespace OnTheFly.FlightService.Controllers
             // Verificar se aircraft existe e é válido
             AirCraft? aircraft = _aircraft.GetAircraft(flightDTO.Plane.RAB).Result;
             if (aircraft == null ) return NotFound();
-            if (aircraft.Company.Status == false) return Unauthorized();
+            if (aircraft.Company == null) return NotFound();
+            if (aircraft.Company.Status == false || aircraft.Company.Status == null) return Unauthorized();
 
             // Inserção de flight
             Flight? flight = _flight.Insert(flightDTO, aircraft, airport);
