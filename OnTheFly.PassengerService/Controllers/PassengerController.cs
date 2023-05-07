@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
+using OnTheFly.Connections;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
-using OnTheFly.PassengerService.Services;
+
 
 namespace OnTheFly.PassengerService.Controllers
 {
@@ -11,35 +12,35 @@ namespace OnTheFly.PassengerService.Controllers
     [ApiController]
     public class PassengerController : ControllerBase
     {
-        private readonly PassengerServices _passengerService;
+        private readonly PassengerConnection _passengerConnection;
         [HttpGet]
         public ActionResult<List<Passenger>> GetAll()
         {
-            return _passengerService.GetAll(); ;
+            return _passengerConnection.FindAll(); ;
         }
-        [HttpGet(Name = "GetCPF")]
+        [HttpGet("{cpf}", Name = "GetCPF")]
         public ActionResult<Passenger> GetBycpf(string cpf)
         {
-            return _passengerService.GetBycpf(cpf); ;
+            return _passengerConnection.FindPassenger(cpf);
         }
         [HttpPost]
         public ActionResult Insert(PassengerDTO passengerdto)
         {
             if (passengerdto.CPF is null) return NoContent();
 
-            _passengerService.Insert(passengerdto);
+            _passengerConnection.Insert(passengerdto);
             return Ok();
         }
         [HttpPut]
         public ActionResult Update(string cpf, Passenger passenger)
         {
-            _passengerService.Update(cpf, passenger);
+            _passengerConnection.Update(cpf, passenger);
             return Ok();
         }
         [HttpDelete]
         public ActionResult Delete(string cpf)
         {
-            _passengerService.Delete(cpf);
+            _passengerConnection.Delete(cpf);
             return Ok(); ;
         }
     }
