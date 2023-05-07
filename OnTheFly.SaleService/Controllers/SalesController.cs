@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OnTheFly.Connections;
+using OnTheFly.Models;
+using OnTheFly.Models.DTO;
+using OnTheFly.SaleService.Services;
 
 namespace OnTheFly.SaleService.Controllers
 {
@@ -10,6 +13,17 @@ namespace OnTheFly.SaleService.Controllers
     public class SalesController : ControllerBase
     {
         private readonly SaleConnection _saleConnection;
+        private readonly FlightService _flight;
+        private readonly PassengerService _passenger;
+
+        public SalesController(SaleConnection saleConnection, FlightService flight, PassengerService passenger)
+        {
+            _saleConnection = saleConnection;
+            _flight = flight;
+            _passenger = passenger;
+        }
+
+        /*
         [HttpGet]
         public ActionResult<string> GetAll()
         {
@@ -24,12 +38,27 @@ namespace OnTheFly.SaleService.Controllers
         {
             return JsonConvert.SerializeObject(_passengerConnection.FindPassenger(cpf), Formatting.Indented);
         }
-        [HttpPost]
-        public ActionResult Insert(PassengerDTO passengerdto)
-        {
-            if (passengerdto.CPF is null) return NoContent();
+        */
 
-            _passengerConnection.Insert(passengerdto);
+        [HttpPost]
+        public ActionResult Insert(SaleDTO saleDTO)
+        {
+            Flight? flight = _flight.GetFlight(saleDTO.IATA, saleDTO.RAB, saleDTO.Departure).Result;
+            if (flight == null) return NotFound();
+
+            List<Passenger> passengers = new List<Passenger>();
+            foreach (string cpf in saleDTO.Passengers)
+            {
+                Passenger? passenger = _passenger.GetPassenger(cpf).Result;
+                if (passenger == null) return NotFound();
+                passengers.Add(passenger);
+            }
+
+            // Não se pode ter o mesmo cpf em vários passageiros
+            // O primeiro da lista não pode ser maior de idade
+            // Não se pode ter passageiros restritos
+
+            _saleConnection.Insert(saleDTO, flight, passengers);
             return Ok();
         }
         [HttpPut]

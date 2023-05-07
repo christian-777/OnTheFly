@@ -1,3 +1,6 @@
+using OnTheFly.Connections;
+using OnTheFly.SaleService.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +9,10 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<SaleConnection>();
+builder.Services.AddSingleton<FlightService>();
+builder.Services.AddSingleton<PassengerService>();
 
 var app = builder.Build();
 
