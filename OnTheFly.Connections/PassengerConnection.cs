@@ -13,7 +13,6 @@ namespace OnTheFly.Connections
     public class PassengerConnection
     {
         public IMongoDatabase Database { get; private set; }
-
         public PassengerConnection()
         {
             var client = new MongoClient("mongodb://localhost:27017");
@@ -32,7 +31,6 @@ namespace OnTheFly.Connections
                 DtRegister = passengerdto.DtRegister,
                 Status = passengerdto.Status
             };
-
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
             collection.InsertOne(passenger);
             return passenger;

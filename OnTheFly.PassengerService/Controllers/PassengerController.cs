@@ -13,10 +13,15 @@ namespace OnTheFly.PassengerService.Controllers
     public class PassengerController : ControllerBase
     {
         private readonly PassengerConnection _passengerConnection;
+        public PassengerController(PassengerConnection passengerConnection)
+        {
+            _passengerConnection = passengerConnection;
+        }
         [HttpGet]
         public ActionResult<List<Passenger>> GetAll()
         {
-            return _passengerConnection.FindAll(); ;
+            var passengers = _passengerConnection.FindAll();
+            return passengers;
         }
         [HttpGet("{cpf}", Name = "GetCPF")]
         public ActionResult<Passenger> GetBycpf(string cpf)
@@ -40,8 +45,8 @@ namespace OnTheFly.PassengerService.Controllers
         [HttpDelete]
         public ActionResult Delete(string cpf)
         {
-            _passengerConnection.Delete(cpf);
-            return Ok(); ;
+            if (_passengerConnection.Delete(cpf)) return Ok();
+            return BadRequest();
         }
     }
 }
