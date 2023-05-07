@@ -22,14 +22,13 @@ namespace OnTheFly.AirportService.Controllers
         [HttpGet("/ByIATA/{iata}", Name = "GetAirportIata")]
         public ActionResult<Airport> Get(string iata)
         {
-            Airport airport = _airport.Get(iata);
+            Airport? airport = _airport.Get(iata);
+            if (airport == null)
+                return NotFound();
 
             State? state = _state.GetUF(airport.State);
             if (state == null) airport.State = "null";
             else airport.State = state.UF;
-
-            if (airport == null)
-                return NotFound();
 
             return airport;
         }

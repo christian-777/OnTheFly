@@ -19,7 +19,7 @@ namespace OnTheFly.AirportService.Services
         public List<Airport> Get() =>
             Collection.Find(airport => true).ToList();
 
-        public Airport Get(string iata) =>
+        public Airport? Get(string iata) =>
             Collection.Find<Airport>(airport => airport.IATA == iata).FirstOrDefault();
 
         public List<Airport> GetByState(string state) =>
