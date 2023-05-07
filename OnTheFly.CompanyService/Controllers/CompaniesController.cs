@@ -31,6 +31,16 @@ namespace OnTheFly.CompanyService.Controllers
             return JsonConvert.SerializeObject(_companyConnection.FindAll(), Formatting.Indented);
         }
 
+        [HttpGet("{cnpj}")]
+        public async Task<ActionResult<string>> GetCompany(string cnpj)
+        {
+            if (_companyConnection.FindOne(cnpj) == null)
+            {
+                return NotFound();
+            }
+            return JsonConvert.SerializeObject(_companyConnection.FindOne(cnpj), Formatting.Indented);
+        }
+
         [HttpPost]
         public async Task<ActionResult<string>> PostCompany(CompanyDTO companyDTO)
         {

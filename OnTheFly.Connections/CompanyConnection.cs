@@ -39,6 +39,13 @@ namespace OnTheFly.Connections
             return collection.Find(x => true).ToList();
         }
 
+        //fazer FindOne para encontrar a empresa com o cnpj especifico 
+        public Company FindOne(string cnpj)
+        {
+            var collection = _dataBase.GetCollection<Company>("ActiveCompany");
+            return collection.Find(x => x.Cnpj==cnpj).First();
+        }
+
         //public void Delete(string cnpj)
         //{
         //    var collection = _dataBase.GetCollection<Company>("");

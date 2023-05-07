@@ -42,10 +42,35 @@ namespace OnTheFly.AirCraftService.Controllers
                 return NoContent();
             if (company.Status == null)
                 company.Status = true;
+            airCraftDTO.DtLastFlight = null;
 
             CompanyService.PutCompany(company);
 
-            return JsonConvert.SerializeObject(_airCraftConnection.Insert(airCraftDTO), Formatting.Indented);
+            CompanyDTO companydto = new CompanyDTO()
+            {
+                Address = company.Address,
+                Cnpj = company.Cnpj,
+                DtOpen = new DateDTO(){
+                    Year=company.DtOpen.Year,
+                    Month=company.DtOpen.Month,
+                    Day=company.DtOpen.Day
+                },
+                Name = company.Name,
+                NameOPT = company.NameOPT,
+                Status = company.Status
+            };
+
+            airCraftDTO.Company = companydto;
+
+            try
+            {
+                var inserted = _airCraftConnection.Insert(airCraftDTO);
+                return JsonConvert.SerializeObject(inserted, Formatting.Indented);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{RAB}")]
