@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<FlightConnection>();
 builder.Services.AddSingleton<AirportService>();
+builder.Services.AddSingleton<AircraftService>();
 
 var app = builder.Build();
 
