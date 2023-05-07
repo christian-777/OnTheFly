@@ -29,10 +29,12 @@ namespace OnTheFly.Connections
                 Capacity = airCraftDTO.Capacity,
                 Company = company,
                 RAB = airCraftDTO.RAB,
-                DtLastFlight = DateOnly.Parse(airCraftDTO.DtLastFlight.Year + "/" + airCraftDTO.DtLastFlight.Month + "/" + airCraftDTO.DtLastFlight.Day),
                 DtRegistry = DateOnly.Parse(airCraftDTO.DtRegistry.Year + "/" + airCraftDTO.DtRegistry.Month + "/" + airCraftDTO.DtRegistry.Day)
             };
-            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
+            if (airCraftDTO.DtLastFlight != null)
+                airCraft.DtLastFlight = DateOnly.Parse(airCraftDTO.DtLastFlight.Year + "/" + airCraftDTO.DtLastFlight.Month + "/" + airCraftDTO.DtLastFlight.Day);
+            
+                    var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             collection.InsertOne(airCraft);
 
             return collection.Find(a => a.RAB == airCraftDTO.RAB).First();

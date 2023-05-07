@@ -9,6 +9,7 @@ namespace OnTheFly.Models.DTO
 {
     public class CompanyDTO
     {
+        public string Id { get; set; }
         [StringLength(19)]
         public string Cnpj { get; set; }
         [StringLength(30)]

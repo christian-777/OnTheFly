@@ -39,7 +39,7 @@ namespace OnTheFly.AirCraftService.Controllers
         {
             var company = await CompanyService.GetCompany(airCraftDTO.Company.Cnpj);
             if (company == null)
-                return NoContent();
+                return NotFound();
             if (company.Status == null)
                 company.Status = true;
             airCraftDTO.DtLastFlight = null;
@@ -48,6 +48,7 @@ namespace OnTheFly.AirCraftService.Controllers
 
             CompanyDTO companydto = new CompanyDTO()
             {
+                Id=company.Id,
                 Address = company.Address,
                 Cnpj = company.Cnpj,
                 DtOpen = new DateDTO(){
