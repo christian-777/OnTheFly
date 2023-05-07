@@ -38,7 +38,7 @@ namespace OnTheFly.CompanyService.Controllers
             {
                 return NotFound();
             }
-            return JsonConvert.SerializeObject(_companyConnection.FindAll().Where(x => x.Cnpj == CNPJ), Formatting.Indented);
+            return JsonConvert.SerializeObject(_companyConnection.FindByCnpj(CNPJ), Formatting.Indented);
         }
 
         [HttpPost]

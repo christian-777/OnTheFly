@@ -1,5 +1,6 @@
 ﻿using OnTheFly.Models;
 using Newtonsoft.Json;
+using OnTheFly.Models.DTO;
 
 namespace OnTheFly.AirCraftService.Services
 {

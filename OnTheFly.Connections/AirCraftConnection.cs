@@ -17,6 +17,7 @@ namespace OnTheFly.Connections
         {
             Company company= new Company()
             {
+                Id=airCraftDTO.Company.Id,
                 Address= airCraftDTO.Company.Address,
                 Cnpj= airCraftDTO.Company.Cnpj,
                 DtOpen= DateOnly.Parse(airCraftDTO.Company.DtOpen.Year + "/" + airCraftDTO.Company.DtOpen.Month + "/" + airCraftDTO.Company.DtOpen.Day),
