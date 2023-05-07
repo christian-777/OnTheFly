@@ -31,14 +31,14 @@ namespace OnTheFly.CompanyService.Controllers
             return JsonConvert.SerializeObject(_companyConnection.FindAll(), Formatting.Indented);
         }
 
-        [HttpGet("{cnpj}")]
-        public async Task<ActionResult<string>> GetCompany(string cnpj)
+        [HttpGet("{CNPJ}")]
+        public async Task<ActionResult<string>> GetCompanyByCNPJ(string CNPJ)
         {
-            if (_companyConnection.FindOne(cnpj) == null)
+            if (_companyConnection.FindAll() == null)
             {
                 return NotFound();
             }
-            return JsonConvert.SerializeObject(_companyConnection.FindOne(cnpj), Formatting.Indented);
+            return JsonConvert.SerializeObject(_companyConnection.FindAll().Where(x => x.Cnpj == CNPJ), Formatting.Indented);
         }
 
         [HttpPost]
@@ -46,19 +46,21 @@ namespace OnTheFly.CompanyService.Controllers
         {
             if (companyDTO.Address == null)
             {
-                return NotFound("A companhia não possui endereço!");
+                return NotFound();
             }
 
             if (companyDTO.Address.Street == null)
             {
-                return NotFound("O endereço da companhia não possui o endereço completo!");
+                return NotFound();
             }
 
             companyDTO.Status = null;
-            int aux = companyDTO.Address.Number;
+            int auxNumber = companyDTO.Address.Number;
+            string auxComplement = companyDTO.Address.Complement;
 
             Address address = _postOfficeService.GetAddress(companyDTO.Address.Zipcode).Result;
-            address.Number= aux;
+            address.Number= auxNumber;
+            address.Complement = auxComplement;
             companyDTO.Address = address;
 
             return JsonConvert.SerializeObject(_companyConnection.Insert(companyDTO), Formatting.Indented);

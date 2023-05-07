@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 
@@ -9,6 +11,7 @@ namespace OnTheFly.Models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
+
         [StringLength(19)]
         public string Cnpj { get; set; }
 
@@ -17,7 +20,7 @@ namespace OnTheFly.Models
 
         [StringLength(30)]
         public string NameOPT { get; set; }
-
+        
         public DateOnly DtOpen { get; set; }
 
         public bool? Status { get; set; }
