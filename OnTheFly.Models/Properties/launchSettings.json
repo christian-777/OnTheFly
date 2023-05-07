@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "OnTheFly.Models": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:52050;http://localhost:52051"
+    }
+  }
+}
