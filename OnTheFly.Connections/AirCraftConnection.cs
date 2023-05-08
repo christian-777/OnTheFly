@@ -64,8 +64,28 @@ namespace OnTheFly.Connections
             return trash;
         }
 
-        public AirCraft? Update(string rab, AirCraft airCraft)
+        public AirCraft? Update(string rab, AirCraftDTO airCraftDTO)
         {
+            Company company = new Company()
+            {
+                Id = airCraftDTO.Company.Id,
+                Address = airCraftDTO.Company.Address,
+                Cnpj = airCraftDTO.Company.Cnpj,
+                DtOpen = DateOnly.Parse(airCraftDTO.Company.DtOpen.Year + "/" + airCraftDTO.Company.DtOpen.Month + "/" + airCraftDTO.Company.DtOpen.Day),
+                Name = airCraftDTO.Company.Name,
+                NameOPT = airCraftDTO.Company.NameOPT,
+                Status = airCraftDTO.Company.Status
+            };
+            AirCraft airCraft = new AirCraft()
+            {
+                Capacity = airCraftDTO.Capacity,
+                Company = company,
+                RAB = airCraftDTO.RAB,
+                DtRegistry = DateOnly.Parse(airCraftDTO.DtRegistry.Year + "/" + airCraftDTO.DtRegistry.Month + "/" + airCraftDTO.DtRegistry.Day)
+            };
+            if (airCraftDTO.DtLastFlight != null)
+                airCraft.DtLastFlight = DateOnly.Parse(airCraftDTO.DtLastFlight.Year + "/" + airCraftDTO.DtLastFlight.Month + "/" + airCraftDTO.DtLastFlight.Day);
+
             var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             collection.ReplaceOne(a => a.RAB == rab, airCraft);
             return collection.Find(a => a.RAB == airCraft.RAB).First();

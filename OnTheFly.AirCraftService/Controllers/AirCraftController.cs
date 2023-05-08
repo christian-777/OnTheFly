@@ -75,12 +75,13 @@ namespace OnTheFly.AirCraftService.Controllers
         }
 
         [HttpPut("{RAB}")]
-        public async Task<ActionResult<string>> PostAirCraft(string RAB, AirCraft airCraft)
+        public async Task<ActionResult<string>> PutAirCraft(string RAB, AirCraftDTO airCraftDTO)
         {
-            if (CompanyService.GetCompany(airCraft.Company.Cnpj) == null)
+
+            if (CompanyService.GetCompany(airCraftDTO.Company.Cnpj) == null)
                 return NoContent();
 
-            return JsonConvert.SerializeObject(_airCraftConnection.Update(RAB, airCraft), Formatting.Indented);
+            return JsonConvert.SerializeObject(_airCraftConnection.Update(RAB, airCraftDTO), Formatting.Indented);
         }
 
         [HttpDelete("{RAB}")]
