@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using Newtonsoft.Json;
 using OnTheFly.AirCraftService.Services;
 using OnTheFly.Connections;
@@ -37,43 +38,38 @@ namespace OnTheFly.AirCraftService.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> PostAirCraft(AirCraftDTO airCraftDTO)
         {
-            var company = await CompanyService.GetCompany(airCraftDTO.Company.Cnpj);
+            var company = await CompanyService.GetCompany(airCraftDTO.Company);
             if (company == null)
                 return BadRequest();
-            if (company.Status == null)
-                company.Status = true;
 
             var rab = airCraftDTO.RAB.Replace("-", "");
             if (rab.Length != 5)
                 return BadRequest();
 
             if (!AirCraft.RABValidation(rab))
-                return BadRequest();
-            
-            airCraftDTO.DtLastFlight = null;
+                return BadRequest("invalid RAB");
 
-            CompanyService.PutCompany(company);
-
-            CompanyDTO companydto = new CompanyDTO()
+            if (airCraftDTO.DtLastFlight != null)
             {
-                Id=company.Id,
-                Address = company.Address,
-                Cnpj = company.Cnpj,
-                DtOpen = new DateDTO(){
-                    Year=company.DtOpen.Year,
-                    Month=company.DtOpen.Month,
-                    Day=company.DtOpen.Day
-                },
-                Name = company.Name,
-                NameOPT = company.NameOPT,
-                Status = company.Status
+                DateTime last = airCraftDTO.DtLastFlight.Value;
+                if (airCraftDTO.DtRegistry.Subtract(last).TotalDays > 0 )
+                    return BadRequest();
+            }
+           
+
+
+            AirCraft airCraft = new AirCraft()
+            {
+                Capacity = airCraftDTO.Capacity,
+                Company = company,
+                DtLastFlight= airCraftDTO.DtLastFlight,
+                DtRegistry= airCraftDTO.DtRegistry,
+                RAB=airCraftDTO.RAB
             };
-
-            airCraftDTO.Company = companydto;
-
+            
             try
             {
-                var inserted = _airCraftConnection.Insert(airCraftDTO);
+                var inserted = _airCraftConnection.Insert(airCraft);
                 return JsonConvert.SerializeObject(inserted, Formatting.Indented);
             }
             catch (Exception ex)

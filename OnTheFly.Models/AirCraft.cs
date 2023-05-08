@@ -14,8 +14,8 @@ namespace OnTheFly.Models
         [StringLength(6)]
         public string RAB { get; set; }
         public int Capacity { get; set; }
-        public DateOnly DtRegistry { get; set; }
-        public DateOnly? DtLastFlight { get; set; }
+        public DateTime DtRegistry { get; set; }
+        public DateTime? DtLastFlight { get; set; }
         public Company Company { get; set; }
 
         public static bool RABValidation(string rab)
@@ -39,7 +39,7 @@ namespace OnTheFly.Models
             if (pt1[0] != 'p')
                 return false;
 
-            if(!aceptedLetters.Contains(pt1[2]))
+            if(!aceptedLetters.Contains(pt1[1]))
                 return false;
 
             if (pt2[0] == 'q' || pt2[1] == 'w')

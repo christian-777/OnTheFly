@@ -13,32 +13,12 @@ namespace OnTheFly.Connections
             Database = client.GetDatabase("AirCraft");
         }
 
-        public AirCraft Insert(AirCraftDTO airCraftDTO)
+        public AirCraft Insert(AirCraft airCraft)
         {
-            Company company= new Company()
-            {
-                Id=airCraftDTO.Company.Id,
-                Address= airCraftDTO.Company.Address,
-                Cnpj= airCraftDTO.Company.Cnpj,
-                DtOpen= DateOnly.Parse(airCraftDTO.Company.DtOpen.Year + "/" + airCraftDTO.Company.DtOpen.Month + "/" + airCraftDTO.Company.DtOpen.Day),
-                Name= airCraftDTO.Company.Name,
-                NameOPT= airCraftDTO.Company.NameOPT,
-                Status = airCraftDTO.Company.Status
-            };
-            AirCraft airCraft = new AirCraft()
-            {
-                Capacity = airCraftDTO.Capacity,
-                Company = company,
-                RAB = airCraftDTO.RAB,
-                DtRegistry = DateOnly.Parse(airCraftDTO.DtRegistry.Year + "/" + airCraftDTO.DtRegistry.Month + "/" + airCraftDTO.DtRegistry.Day)
-            };
-            if (airCraftDTO.DtLastFlight != null)
-                airCraft.DtLastFlight = DateOnly.Parse(airCraftDTO.DtLastFlight.Year + "/" + airCraftDTO.DtLastFlight.Month + "/" + airCraftDTO.DtLastFlight.Day);
-            
-                    var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
+            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             collection.InsertOne(airCraft);
 
-            return collection.Find(a => a.RAB == airCraftDTO.RAB).First();
+            return collection.Find(a => a.RAB == airCraft.RAB).First();
         }
 
         public List<AirCraft>? FindAll()
