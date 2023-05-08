@@ -39,9 +39,17 @@ namespace OnTheFly.AirCraftService.Controllers
         {
             var company = await CompanyService.GetCompany(airCraftDTO.Company.Cnpj);
             if (company == null)
-                return NotFound();
+                return BadRequest();
             if (company.Status == null)
                 company.Status = true;
+
+            var rab = airCraftDTO.RAB.Replace("-", "");
+            if (rab.Length != 5)
+                return BadRequest();
+
+            if (!AirCraft.RABValidation(rab))
+                return BadRequest();
+            
             airCraftDTO.DtLastFlight = null;
 
             CompanyService.PutCompany(company);
