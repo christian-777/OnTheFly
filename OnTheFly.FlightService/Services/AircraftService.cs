@@ -23,9 +23,10 @@ namespace OnTheFly.FlightService.Services
             return result;
         }
 
-        public async Task<AirCraft?> UpdateAircraft(string RAB, string date)
+        public async Task<AirCraft?> UpdateAircraft(string RAB, DateTime date)
         {
-            HttpResponseMessage res = await _httpClient.PutAsync("https://localhost:5000/api/AirCraft/" + RAB + ", " + date, null);
+            string jsonDate = JsonConvert.SerializeObject(date);
+            HttpResponseMessage res = await _httpClient.PutAsync("https://localhost:5000/api/AirCraft/" + RAB + ", " + jsonDate, null);
             if (!res.IsSuccessStatusCode) return null;
 
             string content = await res.Content.ReadAsStringAsync();

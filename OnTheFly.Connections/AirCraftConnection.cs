@@ -91,13 +91,13 @@ namespace OnTheFly.Connections
             return collection.Find(a => a.RAB == airCraft.RAB).First();
         }
 
-        public AirCraft? UpdateDate(string rab, string date)
+        public AirCraft? UpdateDate(string rab, DateTime date)
         {
             var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             AirCraft? airCraft = collection.Find(a => a.RAB == rab).FirstOrDefault();
             if (airCraft == null) return null;
 
-            airCraft.DtLastFlight = DateTime.Parse(date);
+            airCraft.DtLastFlight = date;
             collection.ReplaceOne(a => a.RAB == rab, airCraft);
 
             return airCraft;

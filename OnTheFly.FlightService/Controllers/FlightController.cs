@@ -59,7 +59,7 @@ namespace OnTheFly.FlightService.Controllers
 
             // Atualizar data de último voo de aircraft para a data do voo
             aircraft.DtLastFlight = flightDTO.Departure;
-            if (_aircraft.UpdateAircraft(aircraft.RAB, flightDTO.Departure.ToString()) == null) return BadRequest("Impossível atualizar última data de voo do avião");
+            if (_aircraft.UpdateAircraft(aircraft.RAB, flightDTO.Departure) == null) return BadRequest("Impossível atualizar última data de voo do avião");
 
             // Inserção de flight
             Flight? flight = _flight.Insert(flightDTO, aircraft, airport);
@@ -81,7 +81,7 @@ namespace OnTheFly.FlightService.Controllers
             return Ok();
         }
 
-        [HttpDelete("{IATA:length(3)}, {RAB:length(6)}, {departure}")]
+        [HttpDelete("{IATA}, {RAB:}, {departure}")]
         public ActionResult Delete(string IATA, string RAB, DateTime? departure)
         {
             if (IATA == null || RAB == null || departure == null) return NoContent();

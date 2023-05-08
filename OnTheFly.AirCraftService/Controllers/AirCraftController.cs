@@ -81,7 +81,7 @@ namespace OnTheFly.AirCraftService.Controllers
         }
 
         [HttpPut("{RAB}, {DtLastFlight}")]
-        public async Task<ActionResult<string>> PutAirCraft(string RAB, string DtLastFlight)
+        public async Task<ActionResult<string>> PutAirCraft(string RAB, DateTime DtLastFlight)
         {
             if (RAB == null || DtLastFlight == null) return NoContent();
 
