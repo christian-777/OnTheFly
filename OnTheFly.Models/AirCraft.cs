@@ -12,8 +12,8 @@ namespace OnTheFly.Models
         [StringLength(6)]
         public string RAB { get; set; }
         public int Capacity { get; set; }
-        public DateOnly DtRegistry { get; set; }
-        public DateOnly? DtLastFlight { get; set; }
+        public DateTime DtRegistry { get; set; }
+        public DateTime? DtLastFlight { get; set; }
         public Company Company { get; set; }
     }
 }

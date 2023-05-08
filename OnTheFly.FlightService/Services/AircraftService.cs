@@ -23,45 +23,9 @@ namespace OnTheFly.FlightService.Services
             return result;
         }
 
-        public async Task<AirCraft?> UpdateAircraft(string RAB, AirCraft aircraft)
+        public async Task<AirCraft?> UpdateAircraft(string RAB, string date)
         {
-            Company company = aircraft.Company;
-            CompanyDTO companyDTO = new CompanyDTO()
-            {
-                Id = company.Id,
-                Address = company.Address,
-                Cnpj = company.Cnpj,
-                DtOpen = new DateDTO()
-                {
-                    Year = company.DtOpen.Year,
-                    Month = company.DtOpen.Month,
-                    Day = company.DtOpen.Day
-                },
-                Name = company.Name,
-                NameOPT = company.NameOPT,
-                Status = company.Status
-            };
-            AirCraftDTO airCraftDTO = new AirCraftDTO
-            {
-                RAB = RAB,
-                Capacity = aircraft.Capacity,
-                Company = companyDTO,
-                DtLastFlight = new DateDTO
-                {
-                    Year = aircraft.DtLastFlight.Value.Year,
-                    Month = aircraft.DtLastFlight.Value.Month,
-                    Day = aircraft.DtLastFlight.Value.Day,
-                },
-                DtRegistry = new DateDTO
-                {
-                    Year = aircraft.DtRegistry.Year,
-                    Month = aircraft.DtRegistry.Month,
-                    Day = aircraft.DtRegistry.Day,
-                }
-            };
-
-            HttpContent httpContent = new StringContent(JsonConvert.SerializeObject(airCraftDTO), Encoding.UTF8, "application/json");
-            HttpResponseMessage res = await _httpClient.PutAsync("https://localhost:5000/api/AirCraft/" + RAB, httpContent);
+            HttpResponseMessage res = await _httpClient.PutAsync("https://localhost:5000/api/AirCraft/" + RAB + ", " + date, null);
             if (!res.IsSuccessStatusCode) return null;
 
             string content = await res.Content.ReadAsStringAsync();

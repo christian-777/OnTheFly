@@ -51,11 +51,7 @@ namespace OnTheFly.AirCraftService.Controllers
                 Id=company.Id,
                 Address = company.Address,
                 Cnpj = company.Cnpj,
-                DtOpen = new DateDTO(){
-                    Year=company.DtOpen.Year,
-                    Month=company.DtOpen.Month,
-                    Day=company.DtOpen.Day
-                },
+                DtOpen = company.DtOpen,
                 Name = company.Name,
                 NameOPT = company.NameOPT,
                 Status = company.Status
@@ -82,6 +78,14 @@ namespace OnTheFly.AirCraftService.Controllers
                 return NoContent();
 
             return JsonConvert.SerializeObject(_airCraftConnection.Update(RAB, airCraftDTO), Formatting.Indented);
+        }
+
+        [HttpPut("{RAB}, {DtLastFlight}")]
+        public async Task<ActionResult<string>> PutAirCraft(string RAB, string DtLastFlight)
+        {
+            if (RAB == null || DtLastFlight == null) return NoContent();
+
+            return JsonConvert.SerializeObject(_airCraftConnection.UpdateDate(RAB, DtLastFlight), Formatting.Indented);
         }
 
         [HttpDelete("{RAB}")]

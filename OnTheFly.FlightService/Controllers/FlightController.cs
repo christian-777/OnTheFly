@@ -54,12 +54,12 @@ namespace OnTheFly.FlightService.Controllers
             if (aircraft.Company.Status == false || aircraft.Company.Status == null) return Unauthorized();
 
             // Verificação se data de voo é depois do último voo do aircraft
-            if (aircraft.DtLastFlight != null && DateTime.Parse(aircraft.DtLastFlight.ToString()) > flightDTO.Departure)
+            if (aircraft.DtLastFlight != null && aircraft.DtLastFlight > flightDTO.Departure)
                 return BadRequest("Data de voo não pode ser antes do último voo do avião");
 
             // Atualizar data de último voo de aircraft para a data do voo
-            aircraft.DtLastFlight = DateOnly.Parse(flightDTO.Departure.ToString("yyyy/MM/dd"));
-            if (_aircraft.UpdateAircraft(aircraft.RAB, aircraft) == null) return BadRequest("Impossível atualizar última data de voo do avião");
+            aircraft.DtLastFlight = flightDTO.Departure;
+            if (_aircraft.UpdateAircraft(aircraft.RAB, flightDTO.Departure.ToString()) == null) return BadRequest("Impossível atualizar última data de voo do avião");
 
             // Inserção de flight
             Flight? flight = _flight.Insert(flightDTO, aircraft, airport);

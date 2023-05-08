@@ -19,7 +19,7 @@ namespace OnTheFly.Models.DTO
         [StringLength(30)]
         public string NameOPT { get; set; }
 
-        public DateDTO DtOpen { get; set; }
+        public DateTime DtOpen { get; set; }
 
         public bool? Status { get; set; }
 
