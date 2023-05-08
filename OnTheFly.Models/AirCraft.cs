@@ -22,7 +22,7 @@ namespace OnTheFly.Models
         {
             rab=rab.ToLower();
             char[] aceptedLetters = new char[] { 'p', 'r', 's', 't', 'u' };
-            string[] unaceptedPrefixes = new string[] { "sos", "xxx", "pan", "ttt", "vfr", "ifr", "vmc", "imc", "tnc", "pqp", "pnc", "tas"};
+            string[] unaceptedPrefixes = new string[] { "sos", "xxx", "pan", "ttt", "vfr", "ifr", "vmc", "imc", "tnc", "pqp", "pnc"};
 
             StringBuilder aux1 = new StringBuilder();
             aux1.Append(rab[0]);
@@ -46,6 +46,9 @@ namespace OnTheFly.Models
                 return false;
 
             if(unaceptedPrefixes.Contains(pt2))
+                return false;
+
+            if (rab.Equals("putas")) 
                 return false;
 
             return true;
