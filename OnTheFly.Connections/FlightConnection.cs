@@ -39,6 +39,12 @@ namespace OnTheFly.Connections
             return activeCollection.Find(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure).FirstOrDefault();
         }
 
+        public void Update(string IATA, string RAB, DateTime departure, Flight flight)
+        {
+            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActiveFlight");
+            activeCollection.ReplaceOne(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure, flight);
+        }
+
         public Flight Delete(string IATA, string RAB, DateTime departure)
         {
             // Troca de collection

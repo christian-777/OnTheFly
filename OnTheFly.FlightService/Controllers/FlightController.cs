@@ -49,7 +49,7 @@ namespace OnTheFly.FlightService.Controllers
 
             // Verificar se aircraft existe e é válido
             AirCraft? aircraft = _aircraft.GetAircraft(flightDTO.Plane.RAB).Result;
-            if (aircraft == null ) return NotFound();
+            if (aircraft == null) return NotFound();
             if (aircraft.Company == null) return NotFound();
             if (aircraft.Company.Status == false || aircraft.Company.Status == null) return Unauthorized();
 
@@ -65,6 +65,19 @@ namespace OnTheFly.FlightService.Controllers
             Flight? flight = _flight.Insert(flightDTO, aircraft, airport);
 
             if (flight == null) return BadRequest();
+            return Ok();
+        }
+
+        [HttpPut("{IATA}, {RAB}, {departure}, {salesNumber}")]
+        public ActionResult UpdateSales (string IATA, string RAB, DateTime departure, int salesNumber)
+        {
+            if (departure == null) return NotFound();
+            Flight? flight = _flight.Get(IATA, RAB, departure);
+            if (flight == null) return NotFound();
+
+            flight.Sales += salesNumber;
+
+            _flight.Update(IATA, RAB, departure, flight);
             return Ok();
         }
 
