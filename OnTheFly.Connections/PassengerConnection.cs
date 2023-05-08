@@ -28,8 +28,8 @@ namespace OnTheFly.Connections
                 Name = passengerdto.Name,
                 Gender = passengerdto.Gender,
                 Phone = passengerdto.Phone,
-                DtBirth = DateOnly.Parse(passengerdto.DtBirth.Year + "/" + passengerdto.DtBirth.Month + "/" + passengerdto.DtBirth.Day),
-                DtRegister = passengerdto.DtRegister,
+                DtBirth = DateTime.Now,
+                DtRegister = DateTime.Now,
                 Status = passengerdto.Status
             };
 
@@ -40,7 +40,7 @@ namespace OnTheFly.Connections
         public Passenger FindPassenger(string cpf)
         {
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
-            return collection.Find(cpf).FirstOrDefault();
+            return collection.Find(c => c.CPF == cpf).FirstOrDefault();
 
         }
         public List<Passenger> FindAll()
