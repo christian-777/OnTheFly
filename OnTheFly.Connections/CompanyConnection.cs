@@ -50,7 +50,7 @@ namespace OnTheFly.Connections
         //    var collection = _dataBase.GetCollection<Company>("");
         //    var collection2 = _dataBase.GetCollection<Company>("");
 
-        //    var trash = collection.Find<Company>().FirstOrDefault();
+        //    var trash = collection.Find<Company>(x => x.Cnpj == cnpj).FirstOrDefault();
 
         //    collection2.InsertOne(trash);
 

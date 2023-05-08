@@ -128,5 +128,25 @@ namespace OnTheFly.CompanyService.Controllers
                 throw;
             }
         }
+
+        [HttpDelete("{CNPJ}")]
+        public async Task<ActionResult> DeleteCompany(string CNPJ)
+        {
+            for (int i = 0; i < CNPJ.Length; i++)
+            {
+                if ((CNPJ[i] != '0') && (CNPJ[i] != '1') && (CNPJ[i] != '2') && (CNPJ[i] != '3') && (CNPJ[i] != '4') && (CNPJ[i] != '5') && (CNPJ[i] != '6') && (CNPJ[i] != '7') && (CNPJ[i] != '8') && (CNPJ[i] != '9'))
+                {
+                    return BadRequest("O CNPJ informado não possui apenas valores numéricos! Por favor, insira um valor de CNPJ que contenha 14 digitos numéricos (apenas números)");
+                }
+            }
+
+            if (CNPJ.Length != 14)
+                return BadRequest("CNPJ informado não possui o formato necessário para realizar a deleção da companhia! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
+
+            if (_companyConnection.FindAll().Where(x => x.Cnpj == CNPJ) == null)
+                return NotFound();
+
+            return Ok();
+        }
     }
 }
