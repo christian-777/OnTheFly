@@ -16,12 +16,14 @@ namespace OnTheFly.SaleService.Controllers
         private readonly SaleConnection _saleConnection;
         private readonly FlightService _flight;
         private readonly PassengerService _passenger;
+        private readonly FlightConnection _flightService;
 
-        public SalesController(SaleConnection saleConnection, FlightService flight, PassengerService passenger)
+        public SalesController(SaleConnection saleConnection, FlightService flight, PassengerService passenger, FlightConnection flightconn)
         {
             _saleConnection = saleConnection;
             _flight = flight;
             _passenger = passenger;
+            _flightService = flightconn;
         }
 
         
@@ -50,7 +52,7 @@ namespace OnTheFly.SaleService.Controllers
             if (saleDTO.Reserved == saleDTO.Sold)
                 return BadRequest("Status de venda ou agendamento invalido");
 
-            Flight? flight = _flight.GetFlight(saleDTO.IATA, saleDTO.RAB, saleDTO.Departure).Result;
+            Flight? flight = _flightService.Get(saleDTO.IATA, saleDTO.RAB, saleDTO.Departure);
             if (flight == null) return NotFound();
 
             List<Passenger> passengers = new List<Passenger>();
@@ -58,7 +60,7 @@ namespace OnTheFly.SaleService.Controllers
             {
                 Passenger? passenger = _passenger.GetPassenger(cpf).Result;
                 if (passenger == null) return NotFound();
-                if (passenger.Status) return BadRequest("Existem passageiros impedidos de comprar");
+                if (!passenger.Status) return BadRequest("Existem passageiros impedidos de comprar");
                 passengers.Add(passenger);
             }
          
@@ -72,11 +74,11 @@ namespace OnTheFly.SaleService.Controllers
                     return BadRequest("Não é permitida a compra de mais de uma passagem por passageiro");
             }
 
-            if (passengers.Count + flight.Sales > flight.Plane.Capacity)
-                return BadRequest("A quantidade de passagens excede a capacidade do avião");
+           /* if (passengers.Count + flight.Sales > flight.Plane.Capacity)
+                return BadRequest("A quantidade de passagens excede a capacidade do avião"); */
 
-            if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
-                return BadRequest("Não foi possível atualizar o voo");
+           /* if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
+                return BadRequest("Não foi possível atualizar o voo"); */
             
             _saleConnection.Insert(saleDTO, flight, passengers);
             return Ok();

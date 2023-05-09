@@ -26,15 +26,15 @@ namespace OnTheFly.FlightService.Controllers
         [HttpGet("{IATA}, {RAB}, {departure}")]
         public ActionResult<string> Get(string IATA, string RAB, string departure)
         {
-            if (IATA == null || RAB == null || departure == null) return NoContent();
-
             bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
             if (!isDate) return BadRequest("Formato de data não reconhecido");
 
-            BsonDateTime departureBSON = BsonDateTime.Create(departureDT.Date);
-            if (departureBSON == null) return BadRequest("Formato de data não reconhecido");
+            BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
 
-            Flight? flight = _flight.Get(IATA, RAB, departureBSON);
+            DateTime dateTime = DateTime.Parse(departure);
+            if (IATA == null || RAB == null || departure == null) return NoContent();
+
+            Flight? flight = _flight.Get(IATA, RAB, bsonDate);
 
             if (flight == null) return NotFound();
 
@@ -75,20 +75,31 @@ namespace OnTheFly.FlightService.Controllers
         }
 
         [HttpPatch("{IATA}, {RAB}, {departure}, {salesNumber}")]
-        public ActionResult PatchSales(string IATA, string RAB, DateTime departure, int salesNumber)
+        public ActionResult PatchSales(string IATA, string RAB, string departure, int salesNumber)
         {
-            Flight? flight = _flight.Get(IATA, RAB, departure);
+            bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
+            if (!isDate) return BadRequest("Formato de data não reconhecido");
+
+            BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
+
+            Flight? flight = _flight.Get(IATA, RAB, bsonDate);
             if (flight == null) return NotFound();
 
-            _flight.PatchSalesNumber(IATA, RAB, departure, salesNumber);
+            _flight.PatchSalesNumber(IATA, RAB, bsonDate, salesNumber);
             return Ok();
         }
 
         [HttpDelete("{IATA}, {RAB}, {departure}")]
-        public ActionResult Delete(string IATA, string RAB, DateTime? departure)
+        public ActionResult Delete(string IATA, string RAB, string departure)
         {
             if (IATA == null || RAB == null || departure == null) return NoContent();
-            Flight? flight = _flight.Delete(IATA, RAB, departure.Value);
+
+            bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
+            if (!isDate) return BadRequest("Formato de data não reconhecido");
+
+            BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
+
+            Flight? flight = _flight.Delete(IATA, RAB, departureDT);
 
             if (flight == null) return NotFound();
             return Ok();

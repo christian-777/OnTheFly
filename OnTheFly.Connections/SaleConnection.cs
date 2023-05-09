@@ -20,9 +20,8 @@ namespace OnTheFly.Connections
         }
         public Sale Insert(SaleDTO saleDTO, Flight flight, List<Passenger> passengers)
         {
-            Sale sale = new Sale 
-            { 
-                Id = saleDTO.Id,
+            Sale sale = new Sale
+            {
                 Flight = flight,
                 Passengers = passengers,
                 Reserved = saleDTO.Reserved,

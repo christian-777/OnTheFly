@@ -1,7 +1,9 @@
 ﻿using System.Text;
+using Microsoft.OpenApi.Extensions;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using OnTheFly.Models;
+using OnTheFly.Models.DTO;
 
 namespace OnTheFly.SaleService.Services
 {
@@ -13,15 +15,11 @@ namespace OnTheFly.SaleService.Services
         {
             try
             {
-                JsonSerializerSettings jsonSettings = new JsonSerializerSettings();
-                jsonSettings.DateFormatString = "yyyy-MM-ddThh:mm:ss.fffZ";
-                jsonSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
-                string jsonDate = JsonConvert.SerializeObject(departure, jsonSettings);
 
-                
+                BsonDateTime bsonDate = BsonDateTime.Create(departure);
 
-                HttpResponseMessage res = await _httpClient.GetAsync("https://localhost:5003/api/Flight/" + IATA + ", " + RAB + ", " + jsonDate);
-                if (!res.IsSuccessStatusCode) return new Flight();
+                HttpResponseMessage res = await _httpClient.GetAsync("https://localhost:5003/api/Flight/" + IATA + ", " + RAB + ", " + bsonDate);
+                if (!res.IsSuccessStatusCode) return null;
 
                 string content = await res.Content.ReadAsStringAsync();
                 Flight? result = JsonConvert.DeserializeObject<Flight>(content);

@@ -24,7 +24,7 @@ namespace OnTheFly.Connections
             {
                 Destiny = airport,
                 Plane = aircraft,
-                Departure = DateTime.Parse(flightDTO.Departure.ToString("yyyy/MM/dd hh:mm")),
+                Departure = flightDTO.Departure,
                 Status = flightDTO.Status,
                 Sales = flightDTO.Sales
             };
@@ -42,24 +42,19 @@ namespace OnTheFly.Connections
             return activeCollection.Find(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure).FirstOrDefault();
         }
 
-        public void PatchSalesNumber(string IATA, string RAB, DateTime departure, int salesNumber)
+        public void PatchSalesNumber(string IATA, string RAB, BsonDateTime departure, int salesNumber)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
 
-            JsonSerializerSettings jsonSettings = new JsonSerializerSettings();
-            jsonSettings.DateFormatString = "yyyy-MM-ddThh:mm:ss.fffZ";
-            jsonSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
-            string jsonDate = JsonConvert.SerializeObject(departure, jsonSettings);
-
             var filter = Builders<Flight>.Filter.Eq("IATA", IATA)
                 & Builders<Flight>.Filter.Eq("RAB", RAB)
-                & Builders<Flight>.Filter.Eq("Departure", jsonDate);
+                & Builders<Flight>.Filter.Eq("Departure", departure);
 
             var update = Builders<Flight>.Update.Set("Sales", salesNumber);
             activeCollection.UpdateOne(filter, update);
         }
 
-        public Flight Delete(string IATA, string RAB, DateTime departure)
+        public Flight Delete(string IATA, string RAB, BsonDateTime departure)
         {
             // Troca de collection
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");

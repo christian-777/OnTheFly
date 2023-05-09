@@ -13,6 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<SaleConnection>();
 builder.Services.AddSingleton<FlightService>();
 builder.Services.AddSingleton<PassengerService>();
+builder.Services.AddSingleton<FlightConnection>();
 
 var app = builder.Build();
 
