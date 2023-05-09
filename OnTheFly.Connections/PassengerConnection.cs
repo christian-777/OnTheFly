@@ -23,7 +23,6 @@ namespace OnTheFly.Connections
         {
             Passenger passenger = new()
             {
-                Address = passengerdto.Address,
                 CPF = passengerdto.CPF,
                 Name = passengerdto.Name,
                 Gender = passengerdto.Gender,
