@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -19,22 +20,13 @@ namespace OnTheFly.Connections
             var client = new MongoClient("mongodb://localhost:27017");
             Database = client.GetDatabase("Passenger");
         }
-        public Passenger Insert(PassengerDTO passengerdto)
+        public Passenger Insert(Passenger passenger)
         {
-            Passenger passenger = new()
-            {
-                CPF = passengerdto.CPF,
-                Name = passengerdto.Name,
-                Gender = passengerdto.Gender,
-                Phone = passengerdto.Phone,
-                DtBirth = DateTime.Now,
-                DtRegister = DateTime.Now,
-                Status = passengerdto.Status
-            };
 
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
             collection.InsertOne(passenger);
             return passenger;
+
         }
         public Passenger FindPassenger(string cpf)
         {
@@ -68,7 +60,8 @@ namespace OnTheFly.Connections
 
                 status = true;
 
-            }catch
+            }
+            catch
             {
                 status = false;
             }
