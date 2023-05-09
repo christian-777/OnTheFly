@@ -10,7 +10,7 @@ namespace OnTheFly.Models.DTO
     public class CompanyDTO
     {
         public string Id { get; set; }
-        [StringLength(19)]
+        [StringLength(14)]
         public string Cnpj { get; set; }
 
         [StringLength(30)]
@@ -24,5 +24,7 @@ namespace OnTheFly.Models.DTO
         public bool? Status { get; set; }
 
         public Address Address { get; set; }
+
+        public AirCraftDTO AirCraftDTO { get; set; }
     }
 }
