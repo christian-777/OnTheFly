@@ -14,6 +14,11 @@
   <ItemGroup>
     <ProjectReference Include="..\OnTheFly.Connections\OnTheFly.Connections.csproj" />
     <ProjectReference Include="..\OnTheFly.Models\OnTheFly.Models.csproj" />
+    <ProjectReference Include="..\OnTheFly.PostOfficeService\OnTheFly.PostOfficeService.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>

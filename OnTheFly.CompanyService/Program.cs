@@ -1,5 +1,5 @@
 using OnTheFly.Connections;
-using OnTheFly.Services;
+using OnTheFly.PostOfficeService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<PostOfficeService>();
+builder.Services.AddSingleton<PostOfficesService>();
 builder.Services.AddSingleton<CompanyConnection>();
 
 var app = builder.Build();

@@ -19,20 +19,8 @@ namespace OnTheFly.Connections
             var client = new MongoClient("mongodb://localhost:27017");
             Database = client.GetDatabase("Passenger");
         }
-        public Passenger Insert(PassengerDTO passengerdto)
+        public Passenger Insert(Passenger passenger)
         {
-            Passenger passenger = new()
-            {
-                Address = passengerdto.Address,
-                CPF = passengerdto.CPF,
-                Name = passengerdto.Name,
-                Gender = passengerdto.Gender,
-                Phone = passengerdto.Phone,
-                DtBirth = passengerdto.DtBirth,
-                DtRegister = passengerdto.DtRegister,
-                Status = passengerdto.Status
-            };
-
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
             collection.InsertOne(passenger);
             return passenger;
@@ -40,7 +28,7 @@ namespace OnTheFly.Connections
         public Passenger FindPassenger(string cpf)
         {
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
-            return collection.Find(cpf).FirstOrDefault();
+            return collection.Find(c => c.CPF == cpf).FirstOrDefault();
 
         }
         public List<Passenger> FindAll()

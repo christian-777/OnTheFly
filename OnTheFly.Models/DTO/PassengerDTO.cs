@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OnTheFly.Models.DTO
 {
@@ -16,12 +9,16 @@ namespace OnTheFly.Models.DTO
         public string CPF { get; set; }
         [StringLength(30)]
         public string Name { get; set; }
-        public char Gender { get; set; }
+        [StringLength(1)]
+        public string Gender { get; set; }
         [StringLength(14)]
         public string? Phone { get; set; }
         public DateTime DtBirth { get; set; }
         public DateTime DtRegister { get; set; }
         public bool Status { get; set; }
-        public Address Address { get; set; }
-    }
+        public string Zipcode { get; set; }
+        public string Street { get; set; }
+        public int Number { get; set; }
+
+    } 
 }

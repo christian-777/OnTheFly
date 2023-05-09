@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
 using OnTheFly.Models;
 
-namespace OnTheFly.Services
+namespace OnTheFly.PostOfficeService
 {
-    public class PostOfficeService
+    public class PostOfficesService
     {
         static readonly HttpClient address = new HttpClient();
 
@@ -19,7 +19,7 @@ namespace OnTheFly.Services
             }
             catch (HttpRequestException e)
             {
-                throw;
+                return null;
             }
         }
     }

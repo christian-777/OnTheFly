@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using OnTheFly.Connections;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
-using OnTheFly.Services;
+using OnTheFly.PostOfficeService;
 
 namespace OnTheFly.CompanyService.Controllers
 {
@@ -13,9 +13,9 @@ namespace OnTheFly.CompanyService.Controllers
     public class CompaniesController : ControllerBase
     {
         private readonly CompanyConnection _companyConnection;
-        private readonly PostOfficeService _postOfficeService;
+        private readonly PostOfficesService _postOfficeService;
 
-        public CompaniesController(CompanyConnection companyConnection, PostOfficeService postOfficeService)
+        public CompaniesController(CompanyConnection companyConnection, PostOfficesService postOfficeService)
         {
             _companyConnection = companyConnection;
             _postOfficeService = postOfficeService;
