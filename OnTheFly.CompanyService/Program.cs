@@ -1,3 +1,4 @@
+using OnTheFly.CompanyService.Services;
 using OnTheFly.Connections;
 using OnTheFly.Services;
 
@@ -12,6 +13,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<PostOfficeService>();
 builder.Services.AddSingleton<CompanyConnection>();
+builder.Services.AddSingleton<AircraftService>();
 
 var app = builder.Build();
 

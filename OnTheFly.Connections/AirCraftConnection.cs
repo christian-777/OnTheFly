@@ -15,12 +15,12 @@ namespace OnTheFly.Connections
 
         public AirCraft Insert(AirCraftDTO airCraftDTO)
         {
-            Company company= new Company()
+            Company company = new Company()
             {
-                Id=airCraftDTO.Company.Id,
-                Address= airCraftDTO.Company.Address,
-                Cnpj= airCraftDTO.Company.Cnpj,
-                DtOpen= DateOnly.Parse(airCraftDTO.Company.DtOpen.Year + "/" + airCraftDTO.Company.DtOpen.Month + "/" + airCraftDTO.Company.DtOpen.Day),
+                Id = airCraftDTO.Company.Id,
+                Address = airCraftDTO.Company.Address,
+                Cnpj = airCraftDTO.Company.Cnpj,
+                DtOpen = airCraftDTO.Company.DtOpen,
                 Name= airCraftDTO.Company.Name,
                 NameOPT= airCraftDTO.Company.NameOPT,
                 Status = airCraftDTO.Company.Status

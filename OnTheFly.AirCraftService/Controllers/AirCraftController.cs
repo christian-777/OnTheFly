@@ -46,22 +46,18 @@ namespace OnTheFly.AirCraftService.Controllers
 
             CompanyService.PutCompany(company);
 
-            CompanyDTO companydto = new CompanyDTO()
+            CompanyDTO companyDTO = new CompanyDTO()
             {
-                Id=company.Id,
+                Id = company.Id,
                 Address = company.Address,
                 Cnpj = company.Cnpj,
-                DtOpen = new DateDTO(){
-                    Year=company.DtOpen.Year,
-                    Month=company.DtOpen.Month,
-                    Day=company.DtOpen.Day
-                },
+                DtOpen = airCraftDTO.Company.DtOpen,
                 Name = company.Name,
                 NameOPT = company.NameOPT,
                 Status = company.Status
             };
 
-            airCraftDTO.Company = companydto;
+            airCraftDTO.Company = companyDTO;
 
             try
             {
@@ -86,7 +82,7 @@ namespace OnTheFly.AirCraftService.Controllers
         [HttpDelete("{RAB}")]
         public async Task<ActionResult> DeleteAirCraft(string rab)
         {
-            if(_airCraftConnection.Delete(rab)==null)
+            if (_airCraftConnection.Delete(rab) == null)
                 return NotFound();
             return Ok();
 

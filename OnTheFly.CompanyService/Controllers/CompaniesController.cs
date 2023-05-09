@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using OnTheFly.CompanyService.Services;
 using OnTheFly.Connections;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
@@ -13,6 +14,7 @@ namespace OnTheFly.CompanyService.Controllers
     {
         private readonly CompanyConnection _companyConnection;
         private readonly PostOfficeService _postOfficeService;
+        private readonly AircraftService _aircraftService;
 
         public CompaniesController(CompanyConnection companyConnection, PostOfficeService postOfficeService)
         {
@@ -27,27 +29,49 @@ namespace OnTheFly.CompanyService.Controllers
             {
                 return NotFound();
             }
-            return JsonConvert.SerializeObject(_companyConnection.FindAll(), Formatting.Indented);
+            return JsonConvert.SerializeObject(_companyConnection.FindAll().Where(x => x.Status == true), Formatting.Indented);
         }
 
-        [HttpGet("{CNPJ}")]
-        public async Task<ActionResult<string>> GetCompanyByCNPJ(string CNPJ)
+        [HttpGet("{cnpj}")]
+        public async Task<ActionResult<string>> GetCompanyByCNPJ(string cnpj)
         {
-            for (int i = 0; i < CNPJ.Length; i++)
+            if (cnpj.Length != 14)
+                return BadRequest("CNPJ informado não possui o formato necessário para realizar a pesquisa! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
+
+            for (int i = 0; i < cnpj.Length; i++)
             {
-                if ((CNPJ[i] != '0') && (CNPJ[i] != '1') && (CNPJ[i] != '2') && (CNPJ[i] != '3') && (CNPJ[i] != '4') && (CNPJ[i] != '5') && (CNPJ[i] != '6') && (CNPJ[i] != '7') && (CNPJ[i] != '8') && (CNPJ[i] != '9'))
+                if ((cnpj[i] != '0') && (cnpj[i] != '1') && (cnpj[i] != '2') && (cnpj[i] != '3') && (cnpj[i] != '4') && (cnpj[i] != '5') && (cnpj[i] != '6') && (cnpj[i] != '7') && (cnpj[i] != '8') && (cnpj[i] != '9'))
                 {
                     return BadRequest("O CNPJ informado não possui apenas valores numéricos! Por favor, insira um valor de CNPJ que contenha 14 digitos numéricos (apenas números)");
                 }
             }
 
-            if (CNPJ.Length != 14)
-                return BadRequest("CNPJ informado não possui o formato necessário para realizar a pesquisa! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
+            if (_companyConnection.FindAll().Where(x => (x.Status == true) && (x.Cnpj == cnpj)).FirstOrDefault() == null)
+                return BadRequest("O CNPJ informado não existe ou está restrito");
 
-            if (_companyConnection.FindAll().Where(x => x.Cnpj == CNPJ) == null)
+            return JsonConvert.SerializeObject(_companyConnection.FindByCnpj(cnpj), Formatting.Indented);
+        }
+
+        [HttpPut("/nomefantasia/{cnpj},{nameOPT}", Name = "Atualização do Nome Fantasia")]
+        public async Task<ActionResult<string>> UpdateNameOPT(string cnpj, string nameOPT)
+        {
+            if (_companyConnection.FindAll().Where(x => x.Cnpj == cnpj) == null)
                 return NotFound();
 
-            return JsonConvert.SerializeObject(_companyConnection.FindByCnpj(CNPJ), Formatting.Indented);
+            _companyConnection.UpdateNameOPT(cnpj, nameOPT);
+
+            return Accepted();
+        }
+
+        [HttpPut("/status/{cnpj},{status}", Name = "Atualização do Status")]
+        public async Task<ActionResult<string>> UpdateStatus(string cnpj, bool status)
+        {
+            if (_companyConnection.FindAll().Where(x => (x.Cnpj == cnpj) && (x.Status == false)).FirstOrDefault() is not null)
+                return BadRequest("Não é possível fazer UPDATE neste documento pois o status dele está inativo!");
+
+            _companyConnection.UpdateStatus(cnpj, status);
+
+            return Accepted();
         }
 
         [HttpPost]
@@ -55,8 +79,6 @@ namespace OnTheFly.CompanyService.Controllers
         {
             try
             {
-                companyDTO.Status = null;
-
                 #region Company
                 if (companyDTO.Cnpj.Length != 14)
                     return BadRequest("A quantidade de digitos do CNPJ informado está incorreta! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
@@ -121,7 +143,12 @@ namespace OnTheFly.CompanyService.Controllers
                     address.Complement = auxComplement;
                 #endregion
 
-                return JsonConvert.SerializeObject(_companyConnection.Insert(companyDTO), Formatting.Indented);
+                var insertCompany = _companyConnection.Insert(companyDTO);
+
+                if (_aircraftService.InsertAircraft(companyDTO.AirCraftDTO) is null)
+                    return BadRequest("Não foi possível inserir o avião!");
+
+                return JsonConvert.SerializeObject(insertCompany);
             }
             catch (Exception e)
             {
@@ -129,22 +156,46 @@ namespace OnTheFly.CompanyService.Controllers
             }
         }
 
-        [HttpDelete("{CNPJ}")]
-        public async Task<ActionResult> DeleteCompany(string CNPJ)
+        [HttpDelete("/companyactivated{cnpj}")]
+        public async Task<ActionResult> DeleteCompany(string cnpj)
         {
-            for (int i = 0; i < CNPJ.Length; i++)
+            if (cnpj.Length != 14)
+                return BadRequest("CNPJ informado não possui o formato necessário para realizar a deleção da companhia! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
+
+            for (int i = 0; i < cnpj.Length; i++)
             {
-                if ((CNPJ[i] != '0') && (CNPJ[i] != '1') && (CNPJ[i] != '2') && (CNPJ[i] != '3') && (CNPJ[i] != '4') && (CNPJ[i] != '5') && (CNPJ[i] != '6') && (CNPJ[i] != '7') && (CNPJ[i] != '8') && (CNPJ[i] != '9'))
+                if ((cnpj[i] != '0') && (cnpj[i] != '1') && (cnpj[i] != '2') && (cnpj[i] != '3') && (cnpj[i] != '4') && (cnpj[i] != '5') && (cnpj[i] != '6') && (cnpj[i] != '7') && (cnpj[i] != '8') && (cnpj[i] != '9'))
                 {
                     return BadRequest("O CNPJ informado não possui apenas valores numéricos! Por favor, insira um valor de CNPJ que contenha 14 digitos numéricos (apenas números)");
                 }
             }
 
-            if (CNPJ.Length != 14)
+            if (_companyConnection.FindByCnpj(cnpj) == null)
+                return BadRequest("O CNPJ informado não foi encontrado!");
+
+            _companyConnection.Delete(cnpj);
+
+            return Ok();
+        }
+
+        [HttpDelete("/companyrestricted/{cnpj}")]
+        public async Task<ActionResult> DeleteCompanyRestricted(string cnpj)
+        {
+            if (cnpj.Length != 14)
                 return BadRequest("CNPJ informado não possui o formato necessário para realizar a deleção da companhia! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
 
-            if (_companyConnection.FindAll().Where(x => x.Cnpj == CNPJ) == null)
-                return NotFound();
+            for (int i = 0; i < cnpj.Length; i++)
+            {
+                if ((cnpj[i] != '0') && (cnpj[i] != '1') && (cnpj[i] != '2') && (cnpj[i] != '3') && (cnpj[i] != '4') && (cnpj[i] != '5') && (cnpj[i] != '6') && (cnpj[i] != '7') && (cnpj[i] != '8') && (cnpj[i] != '9'))
+                {
+                    return BadRequest("O CNPJ informado não possui apenas valores numéricos! Por favor, insira um valor de CNPJ que contenha 14 digitos numéricos (apenas números)");
+                }
+            }
+
+            if (_companyConnection.FindByCnpjRestricted(cnpj) == null)
+                return BadRequest("O CNPJ informado não foi encontrado!");
+
+            _companyConnection.DeleteByRestricted(cnpj);
 
             return Ok();
         }
