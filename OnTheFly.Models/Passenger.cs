@@ -76,9 +76,9 @@ namespace OnTheFly.Models
             }
             return status;
         }
-        public bool ValidateAge(Passenger passenger)
+        public bool ValidateAge()
         {
-            return (DateTime.Now.Subtract(passenger.DtBirth).TotalDays >= 18 * 365) ? true : false;
+            return (DateTime.Now.Subtract(this.DtBirth).TotalDays/30 >= 18*30) ? true : false;
         }
     }
 }

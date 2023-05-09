@@ -22,9 +22,10 @@ namespace OnTheFly.FlightService.Controllers
             _aircraft = aircraft;
         }
 
-        [HttpGet]
+        [HttpGet("{IATA}, {RAB}, {departure}")]
         public ActionResult<string> Get(string IATA, string RAB, DateTime? departure)
         {
+           
             if (IATA == null || RAB == null || departure == null) return NoContent();
             Flight? flight = _flight.Get(IATA, RAB, departure.Value);
 

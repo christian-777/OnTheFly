@@ -60,11 +60,11 @@ namespace OnTheFly.SaleService.Controllers
                 if (passenger.Status) return BadRequest("passageiro impedido de comprar");
                 passengers.Add(passenger);
             }
-            //calculo de idade
-            //if (passengers[0].)
-              //  return BadRequest("menores nao sao permitidos comprar passagens");
+         
+            if (passengers[0].ValidateAge())
+                return BadRequest("menores nao sao permitidos comprar passagens");
 
-            foreach(var passenger in passengers)
+            foreach (var passenger in passengers)
             {
                 var elements=passengers.FindAll(p=>p==passenger);
                 if (elements.Count != 1)
@@ -74,12 +74,9 @@ namespace OnTheFly.SaleService.Controllers
             if (passengers.Count + flight.Sales > flight.Plane.Capacity)
                 return BadRequest("a quantidade de passagens excede a capacidade do aviao, por favor tente em outro voo");
 
-            //precisa do metodo de put de flight pra mudar a quantdade de vendas
-
-            // Não se pode ter o mesmo cpf em vários passageiros - CONCLUIDO
-            // O primeiro da lista não pode ser maior de idade - PRECISA A PARTE DE CALCULO DE IDADE DE PASSENGER
-            // Não se pode ter passageiros restritos - COMO A COLLECTION DE RESTRICTED É SEPARADA E ACTIVATE NUNCA VAMOS LIDAR COM OS RESTRITOS
-
+            if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
+                return BadRequest("nao foi possivel atualizar o voo");
+            
             _saleConnection.Insert(saleDTO, flight, passengers);
             return Ok();
         }

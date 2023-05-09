@@ -34,7 +34,7 @@ namespace OnTheFly.CompanyService.Controllers
         [HttpGet("{CNPJ}")]
         public async Task<ActionResult<string>> GetCompanyByCNPJ(string CNPJ)
         {
-            if (_companyConnection.FindAll() == null)
+            if (_companyConnection.FindByCnpj(CNPJ) == null)
             {
                 return NotFound();
             }
@@ -54,11 +54,10 @@ namespace OnTheFly.CompanyService.Controllers
                 return NotFound();
             }
 
-            companyDTO.Status = null;
             int auxNumber = companyDTO.Address.Number;
             string auxComplement = companyDTO.Address.Complement;
 
-            Address address = _postOfficeService.GetAddress(companyDTO.Address.Zipcode).Result;
+            Address? address = _postOfficeService.GetAddress(companyDTO.Address.Zipcode).Result;
             if (address == null) return BadRequest("Endereço não encontrado");
             address.Number= auxNumber;
             address.Complement = auxComplement;
