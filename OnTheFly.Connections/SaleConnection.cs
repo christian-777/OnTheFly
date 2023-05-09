@@ -33,14 +33,14 @@ namespace OnTheFly.Connections
             collection.InsertOne(sale);
             return sale;
         }
-        /*
-        public Sale FindSale(string cpf)
+        
+        public Sale FindSale(string cpf, string iata, string rab, DateTime departure)
         {
-            var collection = Database.GetCollection<Passenger>("ActiveSale");
-            return collection.Find(cpf).FirstOrDefault();
+            var collection = Database.GetCollection<Sale>("ActiveSale");
+            return collection.Find(s=> (s.Flight.Departure==departure) && (s.Flight.Plane.RAB==rab) && (s.Flight.Destiny.IATA==iata) && (s.Passengers.FindAll(p=> p.CPF == cpf)[0].CPF==cpf)).FirstOrDefault();
 
         }
-        */
+        
 
         public List<Sale> FindAll()
         {
@@ -48,29 +48,27 @@ namespace OnTheFly.Connections
             return collection.Find(s => true).ToList();
         }
 
-        /*
-        public Sale Update(string cpf, Passenger passenger)
+        
+        public bool Update(string cpf, string iata, string rab, DateTime departure, Sale sale)
         {
-            var collection = Database.GetCollection<Passenger>("ActiveSale");
-            collection.ReplaceOne(p => p.CPF == cpf, passenger);
-            return passenger;
+            var collection = Database.GetCollection<Sale>("ActiveSale");
+            if (collection.ReplaceOne(s => (s.Flight.Departure == departure) && (s.Flight.Plane.RAB == rab) && (s.Flight.Destiny.IATA == iata) && (s.Passengers.FindAll(p => p.CPF == cpf)[0].CPF == cpf), sale).IsModifiedCountAvailable)
+                return true;
+            else
+                return false;
         }
-        */
-
-        /*
-        public bool Delete(string cpf)
+        
+        public bool Delete(string cpf, string iata, string rab, DateTime departure)
         {
             bool status = false;
             try
             {
-                var collection = Database.GetCollection<Passenger>("ActiveSale");
-                var collectionofdelete = Database.GetCollection<Passenger>("InactiveActiveSale");
+                var collection = Database.GetCollection<Sale>("ActiveSale");
+                var collectionofdelete = Database.GetCollection<Sale>("DeletedSale");
 
-                var trash = collection.Find(cpf).FirstOrDefault();
-
-                collectionofdelete.InsertOne(trash);
-                collection.FindOneAndDelete(p => p.CPF == cpf);
-
+                var deletesale= collection.FindOneAndDelete(s => (s.Flight.Departure == departure) && (s.Flight.Plane.RAB == rab) && (s.Flight.Destiny.IATA == iata) && (s.Passengers.FindAll(p => p.CPF == cpf)[0].CPF == cpf));
+                collectionofdelete.InsertOne(deletesale);
+                
                 status = true;
 
             }
