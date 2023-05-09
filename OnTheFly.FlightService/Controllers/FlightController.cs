@@ -37,7 +37,6 @@ namespace OnTheFly.FlightService.Controllers
         public ActionResult Insert(FlightDTO flightDTO)
         {
             if (flightDTO == null) return NoContent();
-            flightDTO.Status = true;
 
             // Verificar se airport existe e é válido
             Airport? airport = _airport.GetValidDestiny(flightDTO.Destiny.IATA).Result;

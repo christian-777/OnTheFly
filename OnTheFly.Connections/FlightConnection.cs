@@ -42,20 +42,7 @@ namespace OnTheFly.Connections
         public void Update(string IATA, string RAB, DateTime departure, Flight flight)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
-            IMongoCollection<Flight> restrictCollection = Database.GetCollection<Flight>("RestrictedFlight");
-
-            if (flight.Status == false && activeCollection.Find(flight.Id).FirstOrDefault() != null)
-            {
-                activeCollection.DeleteOne(flight.Id);
-                restrictCollection.InsertOne(flight);
-            }
-
-            if (flight.Status == true && restrictCollection.Find(flight.Id).FirstOrDefault() != null)
-            {
-                restrictCollection.DeleteOne(flight.Id);
-                activeCollection.InsertOne(flight);
-            }
-            else activeCollection.ReplaceOne(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure, flight);
+            activeCollection.ReplaceOne(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure, flight);
         }
 
         public Flight Delete(string IATA, string RAB, DateTime departure)
