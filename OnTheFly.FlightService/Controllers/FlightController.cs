@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using OnTheFly.Connections;
 using OnTheFly.FlightService.Services;
@@ -69,7 +68,7 @@ namespace OnTheFly.FlightService.Controllers
         }
 
         [HttpPut("{IATA}, {RAB}, {departure}, {salesNumber}")]
-        public ActionResult UpdateSales (string IATA, string RAB, DateTime departure, int salesNumber)
+        public ActionResult UpdateSales(string IATA, string RAB, DateTime departure, int salesNumber)
         {
             if (departure == null) return NotFound();
             Flight? flight = _flight.Get(IATA, RAB, departure);

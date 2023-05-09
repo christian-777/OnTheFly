@@ -1,10 +1,6 @@
 ﻿using System.Text;
-using System.Text.Json.Nodes;
-using System.Text.Unicode;
-using MongoDB.Driver;
 using Newtonsoft.Json;
 using OnTheFly.Models;
-using OnTheFly.Models.DTO;
 
 namespace OnTheFly.FlightService.Services
 {
@@ -25,8 +21,15 @@ namespace OnTheFly.FlightService.Services
 
         public async Task<AirCraft?> UpdateAircraft(string RAB, DateTime date)
         {
-            string jsonDate = JsonConvert.SerializeObject(date);
-            HttpResponseMessage res = await _httpClient.PutAsync("https://localhost:5000/api/AirCraft/" + RAB + ", " + jsonDate, null);
+            // Configurando json para formatação de data no padrão UTC
+            JsonSerializerSettings jsonSettings = new JsonSerializerSettings();
+            jsonSettings.DateFormatString = "yyyy-MM-ddThh:mm:ss.fffZ";
+            jsonSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+            string jsonDate = JsonConvert.SerializeObject(date, jsonSettings);
+
+            HttpContent httpContent = new StringContent(jsonDate, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage res = await _httpClient.PatchAsync("https://localhost:5000/api/AirCraft/" + RAB, httpContent);
             if (!res.IsSuccessStatusCode) return null;
 
             string content = await res.Content.ReadAsStringAsync();

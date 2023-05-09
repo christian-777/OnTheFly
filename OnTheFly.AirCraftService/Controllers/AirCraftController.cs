@@ -80,12 +80,12 @@ namespace OnTheFly.AirCraftService.Controllers
             return JsonConvert.SerializeObject(_airCraftConnection.Update(RAB, airCraftDTO), Formatting.Indented);
         }
 
-        [HttpPut("{RAB}, {DtLastFlight}")]
-        public async Task<ActionResult<string>> PutAirCraft(string RAB, DateTime DtLastFlight)
+        [HttpPatch("{RAB}")]
+        public async Task<ActionResult<string>> PatchAircraftDate(string RAB, [FromBody] DateTime DtLastFlight)
         {
             if (RAB == null || DtLastFlight == null) return NoContent();
 
-            return JsonConvert.SerializeObject(_airCraftConnection.UpdateDate(RAB, DtLastFlight), Formatting.Indented);
+            return JsonConvert.SerializeObject(_airCraftConnection.PatchDate(RAB, DtLastFlight), Formatting.Indented);
         }
 
         [HttpDelete("{RAB}")]
