@@ -18,19 +18,18 @@ namespace OnTheFly.Connections
             var client = new MongoClient("mongodb://localhost:27017");
             Database = client.GetDatabase("Sale");
         }
-        public Sale Insert(SaleDTO saleDTO, Flight flight, List<Passenger> passengers)
+        public Sale Insert(Sale sale)
         {
-            Sale sale = new Sale
+            try
             {
-                Flight = flight,
-                Passengers = passengers,
-                Reserved = saleDTO.Reserved,
-                Sold = saleDTO.Sold
-            };
-
-            var collection = Database.GetCollection<Sale>("ActiveSale");
-            collection.InsertOne(sale);
-            return sale;
+                var collection = Database.GetCollection<Sale>("ActiveSale");
+                collection.InsertOne(sale);
+                return sale;
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
         }
         
         public Sale FindSale(string cpf, string iata, string rab, DateTime departure)

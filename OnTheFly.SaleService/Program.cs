@@ -1,5 +1,6 @@
 using OnTheFly.Connections;
 using OnTheFly.SaleService.Services;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,10 @@ builder.Services.AddSingleton<SaleConnection>();
 builder.Services.AddSingleton<FlightService>();
 builder.Services.AddSingleton<PassengerService>();
 builder.Services.AddSingleton<FlightConnection>();
+
+
+builder.Services.AddSingleton<ConnectionFactory>();
+
 
 var app = builder.Build();
 

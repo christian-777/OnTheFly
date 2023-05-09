@@ -1,4 +1,6 @@
-﻿using System.Xml;
+﻿using System.Net.Sockets;
+using System.Text;
+using System.Xml;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -6,6 +8,7 @@ using OnTheFly.Connections;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
 using OnTheFly.SaleService.Services;
+using RabbitMQ.Client;
 
 namespace OnTheFly.SaleService.Controllers
 {
@@ -17,13 +20,14 @@ namespace OnTheFly.SaleService.Controllers
         private readonly FlightService _flight;
         private readonly PassengerService _passenger;
         private readonly FlightConnection _flightService;
-
-        public SalesController(SaleConnection saleConnection, FlightService flight, PassengerService passenger, FlightConnection flightconn)
+        private readonly ConnectionFactory _factory;
+        public SalesController(SaleConnection saleConnection, FlightService flight, PassengerService passenger, ConnectionFactory factory, FlightConnection flightconn)
         {
             _saleConnection = saleConnection;
             _flight = flight;
             _passenger = passenger;
             _flightService = flightconn;
+            _factory = factory;
         }
 
         
@@ -77,10 +81,62 @@ namespace OnTheFly.SaleService.Controllers
            /* if (passengers.Count + flight.Sales > flight.Plane.Capacity)
                 return BadRequest("A quantidade de passagens excede a capacidade do avião"); */
 
-           /* if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
-                return BadRequest("Não foi possível atualizar o voo"); */
-            
-            _saleConnection.Insert(saleDTO, flight, passengers);
+            /*if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
+                return BadRequest("nao foi possivel atualizar o voo");*/
+
+            Sale sale = new Sale
+            {
+                Flight = flight,
+                Passengers = passengers,
+                Reserved = saleDTO.Reserved,
+                Sold = saleDTO.Sold
+            };
+
+            using (var connection = _factory.CreateConnection())
+            {
+                using (var channel = connection.CreateModel())
+                {
+
+                    channel.QueueDeclare(
+                        queue: "Sales",
+                        durable: false,
+                        exclusive: false,
+                        autoDelete: false,
+                        arguments: null
+                    );
+
+                    channel.QueueDeclare(
+                        queue: "Reservation",
+                        durable: false,
+                        exclusive: false,
+                        autoDelete: false,
+                        arguments: null
+                    );
+
+                    var stringfieldMessage = JsonConvert.SerializeObject(sale);
+                    var bytesMessage = Encoding.UTF8.GetBytes(stringfieldMessage);
+
+                    string queue;
+                    if (sale.Reserved)
+                    {
+                        queue = "Reservation";
+                    }
+                    else
+                    {
+                        queue = "Sales";
+                    }
+
+                    channel.BasicPublish(
+                        exchange: "",
+                        routingKey: queue,
+                        basicProperties: null,
+                        body: bytesMessage
+                        );
+                }
+            }
+            return Accepted();
+
+            //_saleConnection.Insert(sale);
             return Ok();
         }
 
