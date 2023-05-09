@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using OnTheFly.Models;
+using OnTheFly.Models.DTO;
 
 namespace OnTheFly.PostOfficeService
 {

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using OnTheFly.Models.DTO;
 using System.ComponentModel.DataAnnotations;
 
 namespace OnTheFly.Models
@@ -25,5 +26,13 @@ namespace OnTheFly.Models
         public string State { get; set; }
 
         public int Number { get; set; }
+
+        //public Address(AddressDTO addressDTO)
+        //{
+        //    Zipcode = addressDTO.Zipcode;
+        //    Street = addressDTO.Street;
+        //    City = addressDTO.City;
+        //    State = addressDTO.State;
+        //}
     }
 }

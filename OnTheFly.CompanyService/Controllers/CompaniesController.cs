@@ -5,6 +5,7 @@ using OnTheFly.Connections;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
 using OnTheFly.PostOfficeService;
+using System.IO;
 
 namespace OnTheFly.CompanyService.Controllers
 {
@@ -16,10 +17,11 @@ namespace OnTheFly.CompanyService.Controllers
         private readonly PostOfficesService _postOfficeService;
         private readonly AircraftService _aircraftService;
 
-        public CompaniesController(CompanyConnection companyConnection, PostOfficesService postOfficeService)
+        public CompaniesController(CompanyConnection companyConnection, PostOfficesService postOfficeService, AircraftService aircraftService)
         {
             _companyConnection = companyConnection;
             _postOfficeService = postOfficeService;
+            _aircraftService = aircraftService;
         }
 
         [HttpGet]
@@ -52,8 +54,8 @@ namespace OnTheFly.CompanyService.Controllers
             return JsonConvert.SerializeObject(_companyConnection.FindByCnpj(cnpj), Formatting.Indented);
         }
 
-        [HttpPut("/nomefantasia/{cnpj},{nameOPT}", Name = "Atualização do Nome Fantasia")]
-        public async Task<ActionResult<string>> UpdateNameOPT(string cnpj, string nameOPT)
+        [HttpPatch("/nameOPT/{cnpj},{nameOPT}", Name = "Atualização do Nome Fantasia")]
+        public async Task<ActionResult<string>> PatchNameOPT(string cnpj, string nameOPT)
         {
             if (_companyConnection.FindAll().Where(x => x.Cnpj == cnpj) == null)
                 return NotFound();
@@ -63,13 +65,58 @@ namespace OnTheFly.CompanyService.Controllers
             return Accepted();
         }
 
-        [HttpPut("/status/{cnpj},{status}", Name = "Atualização do Status")]
-        public async Task<ActionResult<string>> UpdateStatus(string cnpj, bool status)
+        [HttpPatch("/status/{cnpj},{status}", Name = "Atualização do Status")]
+        public async Task<ActionResult<string>> PatchStatus(string cnpj, bool status)
         {
             if (_companyConnection.FindAll().Where(x => (x.Cnpj == cnpj) && (x.Status == false)).FirstOrDefault() is not null)
                 return BadRequest("Não é possível fazer UPDATE neste documento pois o status dele está inativo!");
 
             _companyConnection.UpdateStatus(cnpj, status);
+
+            return Accepted();
+        }
+
+        [HttpPatch("/address/{cnpj}", Name = "Atualização de Endereço")]
+        public async Task<ActionResult<string>> PatchAddress(string cnpj, [FromBody] Address addressPatch)
+        {
+            int auxNumber = addressPatch.Number;
+            string auxComplement = "";
+
+            if ((addressPatch.Complement != "string") && (addressPatch.Complement != ""))
+                auxComplement = addressPatch.Complement;
+
+            if (addressPatch.Zipcode.Length != 8)
+                return BadRequest("A quantidade de digitos informados para buscar o CEP não é válido! Por favor, insira 8 digitos numéricos para buscar as informações do seu endereço");
+
+            for (int i = 0; i < addressPatch.Zipcode.Length; i++)
+            {
+                if ((addressPatch.Zipcode[i] != '0') && (addressPatch.Zipcode[i] != '1') && (addressPatch.Zipcode[i] != '2') && (addressPatch.Zipcode[i] != '3') && (addressPatch.Zipcode[i] != '4') && (addressPatch.Zipcode[i] != '5') && (addressPatch.Zipcode[i] != '6') && (addressPatch.Zipcode[i] != '7') && (addressPatch.Zipcode[i] != '8') && (addressPatch.Zipcode[i] != '9'))
+                {
+                    return BadRequest("O CEP informado não possui apenas valores numéricos! Por favor, insira um valor de CEP que contenha 8 digitos numéricos (apenas números)");
+                }
+            }
+
+            Address addressDTO = _postOfficeService.GetAddress(addressPatch.Zipcode).Result;
+            Address addressComplet = new Address()
+            {
+                Zipcode = addressDTO.Zipcode,
+                Street = addressDTO.Street,
+                City = addressDTO.City,
+                State = addressDTO.State
+            };
+
+            if (addressComplet.Street == "")
+                addressComplet.Street = addressPatch.Street;
+
+            addressPatch = addressComplet;
+
+            if ((addressPatch.Street == "") || (addressPatch.Street == "string"))
+                return BadRequest("O CEP informado é um CEP municipal! É necessário informar também a rua do endereço");
+
+            addressPatch.Number = auxNumber;
+
+            if (auxComplement != "")
+                addressPatch.Complement = auxComplement;
 
             return Accepted();
         }
@@ -127,25 +174,33 @@ namespace OnTheFly.CompanyService.Controllers
                     }
                 }
 
-                Address address = _postOfficeService.GetAddress(companyDTO.Address.Zipcode).Result;
+                Address addressDTO = _postOfficeService.GetAddress(companyDTO.Address.Zipcode).Result;
+                Address addressComplet = new Address()
+                {
+                    Zipcode = addressDTO.Zipcode,
+                    Street = addressDTO.Street,
+                    City = addressDTO.City,
+                    State = addressDTO.State
+                };
 
-                if (address.Street == "")
-                    address.Street = companyDTO.Address.Street;
 
-                companyDTO.Address = address;
+                if (addressComplet.Street == "")
+                    addressComplet.Street = companyDTO.Address.Street;
+
+                companyDTO.Address = addressComplet;
 
                 if ((companyDTO.Address.Street == "") || (companyDTO.Address.Street == "string"))
                     return BadRequest("O CEP informado é um CEP municipal! É necessário informar também a rua do endereço");
 
-                address.Number = auxNumber;
+                addressComplet.Number = auxNumber;
 
                 if (auxComplement != "")
-                    address.Complement = auxComplement;
+                    addressComplet.Complement = auxComplement;
                 #endregion
 
                 var insertCompany = _companyConnection.Insert(companyDTO);
 
-                if (_aircraftService.InsertAircraft(companyDTO.AirCraftDTO) is null)
+                if (_aircraftService.InsertAircraft(companyDTO.AirCraftDTO) == null)
                     return BadRequest("Não foi possível inserir o avião!");
 
                 return JsonConvert.SerializeObject(insertCompany);
@@ -156,7 +211,7 @@ namespace OnTheFly.CompanyService.Controllers
             }
         }
 
-        [HttpDelete("/companyactivated{cnpj}")]
+        [HttpDelete("/companyactivated/{cnpj}")]
         public async Task<ActionResult> DeleteCompany(string cnpj)
         {
             if (cnpj.Length != 14)
