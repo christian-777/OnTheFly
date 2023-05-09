@@ -79,7 +79,7 @@ namespace OnTheFly.FlightService.Controllers
             return Ok();
         }
 
-        [HttpDelete("{IATA}, {RAB:}, {departure}")]
+        [HttpDelete("{IATA}, {RAB}, {departure}")]
         public ActionResult Delete(string IATA, string RAB, DateTime? departure)
         {
             if (IATA == null || RAB == null || departure == null) return NoContent();

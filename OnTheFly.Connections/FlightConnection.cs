@@ -1,4 +1,5 @@
 ﻿using MongoDB.Driver;
+using Newtonsoft.Json;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
 
@@ -39,10 +40,21 @@ namespace OnTheFly.Connections
             return activeCollection.Find(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure).FirstOrDefault();
         }
 
-        public void Update(string IATA, string RAB, DateTime departure, Flight flight)
+        public void PatchSalesNumber(string IATA, string RAB, DateTime departure, int salesNumber)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
-            activeCollection.ReplaceOne(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure, flight);
+
+            JsonSerializerSettings jsonSettings = new JsonSerializerSettings();
+            jsonSettings.DateFormatString = "yyyy-MM-ddThh:mm:ss.fffZ";
+            jsonSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+            string jsonDate = JsonConvert.SerializeObject(departure, jsonSettings);
+
+            var filter = Builders<Flight>.Filter.Eq("IATA", IATA)
+                & Builders<Flight>.Filter.Eq("RAB", RAB)
+                & Builders<Flight>.Filter.Eq("Departure", jsonDate);
+
+            var update = Builders<Flight>.Update.Set("Sales", salesNumber);
+            activeCollection.UpdateOne(filter, update);
         }
 
         public Flight Delete(string IATA, string RAB, DateTime departure)
