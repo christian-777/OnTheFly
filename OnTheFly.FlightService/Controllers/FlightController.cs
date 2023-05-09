@@ -66,16 +66,13 @@ namespace OnTheFly.FlightService.Controllers
             return Ok();
         }
 
-        [HttpPut("{IATA}, {RAB}, {departure}, {salesNumber}")]
+        [HttpPatch("{IATA}, {RAB}, {departure}, {salesNumber}")]
         public ActionResult UpdateSales(string IATA, string RAB, DateTime departure, int salesNumber)
         {
-            if (departure == null) return NotFound();
             Flight? flight = _flight.Get(IATA, RAB, departure);
             if (flight == null) return NotFound();
 
-            flight.Sales += salesNumber;
-
-            _flight.Update(IATA, RAB, departure, flight);
+            _flight.PatchSalesNumber(IATA, RAB, departure, salesNumber);
             return Ok();
         }
 

@@ -38,10 +38,12 @@ namespace OnTheFly.Connections
             var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
             var collection2 = Database.GetCollection<AirCraft>("InactiveAirCraft");
 
-            var trash = collection.FindOneAndDelete(a => a.RAB == rab);
-            collection2.InsertOne(trash);
+            var filter = Builders<AirCraft>.Filter.Eq("RAB", rab);
 
-            return trash;
+            AirCraft? aircraft = collection.FindOneAndDelete(filter);
+            if (aircraft != null) collection2.InsertOne(aircraft);
+
+            return aircraft;
         }
 
         public AirCraft? Update(string rab, AirCraft airCraft)

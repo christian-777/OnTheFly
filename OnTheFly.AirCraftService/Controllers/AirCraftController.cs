@@ -55,8 +55,6 @@ namespace OnTheFly.AirCraftService.Controllers
                 if (airCraftDTO.DtRegistry.Subtract(last).TotalDays > 0 )
                     return BadRequest();
             }
-           
-
 
             AirCraft airCraft = new AirCraft()
             {
@@ -82,8 +80,15 @@ namespace OnTheFly.AirCraftService.Controllers
         [HttpPut("{RAB}")]
         public async Task<ActionResult<string>> PutAirCraft(string RAB, AirCraft airCraft)
         {
-            if (CompanyService.GetCompany(airCraft.Company.Cnpj) == null)
+            AirCraft? existingAircraft = _airCraftConnection.FindOne(RAB);
+            if (existingAircraft == null) return NotFound();
+            airCraft.Id = existingAircraft.Id;
+
+            Company? company = CompanyService.GetCompany(airCraft.Company.Cnpj).Result;
+            if (company == null)
                 return NoContent();
+
+            airCraft.Company = company;
 
             return JsonConvert.SerializeObject(_airCraftConnection.Update(RAB, airCraft), Formatting.Indented);
         }
@@ -97,9 +102,9 @@ namespace OnTheFly.AirCraftService.Controllers
         }
 
         [HttpDelete("{RAB}")]
-        public async Task<ActionResult> DeleteAirCraft(string rab)
+        public async Task<ActionResult> DeleteAirCraft(string RAB)
         {
-            if(_airCraftConnection.Delete(rab)==null)
+            if(_airCraftConnection.Delete(RAB) ==null)
                 return NotFound();
             return Ok();
 

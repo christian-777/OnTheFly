@@ -36,9 +36,10 @@ namespace OnTheFly.PassengerService.Controllers
         [HttpPost]
         public ActionResult Insert(PassengerDTO passengerdto)
         {
-            if (passengerdto.CPF is null) return NotFound("CPF não informado!");
+            if (passengerdto.CPF == null) return NotFound("CPF não informado!");
 
-            var cpf = passengerdto.CPF.Replace(".", "").Replace("-", "");
+            string cpf = passengerdto.CPF.Replace('.', '\n').Replace('-', '\n');
+
 
             if (!long.TryParse(cpf, out var aux))
                 return BadRequest("CPF Inválido!");
@@ -51,31 +52,27 @@ namespace OnTheFly.PassengerService.Controllers
                 //int number = passengerdto.Number;
 
                 Address? address = _postOfficeService.GetAddress(passengerdto.Zipcode).Result;
-                if (address is null)
+                if (address == null)
                     return BadRequest("Endereço inexistente!");
 
                 //passengerdto.Number = number;
 
-                if (address.Street == "")
+                passenger.Address = new Address();
+                if (address.Street == "" || address.Street == null)
                 {
-                    if (passengerdto.Street == "")
+                    if (passengerdto.Street == "string" || passengerdto.Street == null)
                         return NotFound("Rua não obtida! Informar manualmente.");
                     else
-                        passenger.Address.Street = address.Street;
+                        passenger.Address.Street = passengerdto.Street;
                 }
-                else
-                {
-                    if (!address.Street.Equals(passengerdto.Street))
-                        passenger.Address.Street = address.Street;
+                else passenger.Address.Street = address.Street;
 
-                }
-                passenger.Address.Street = passengerdto.Street;
                 passenger.Address.City = address.City;
                 passenger.Address.Complement = address.Complement;
                 passenger.Address.Number = passengerdto.Number;
                 passenger.Address.State = address.State;
                 passenger.Address.Zipcode = address.Zipcode;
-                passenger.CPF = passengerdto.CPF;
+                passenger.CPF = cpf;
                 passenger.DtBirth = passengerdto.DtBirth;
                 passenger.DtRegister = passengerdto.DtRegister;
                 passenger.Gender = passengerdto.Gender;
@@ -95,7 +92,8 @@ namespace OnTheFly.PassengerService.Controllers
         {
             if (cpf is null) return NotFound("CPF não informado!");
 
-            var passenger = _passengerConnection.FindPassenger(cpf);
+            Passenger? passenger = _passengerConnection.FindPassenger(cpf);
+            if (passenger == null) return NotFound();
 
             if (passengerput.Name != "string")
             {
@@ -116,10 +114,10 @@ namespace OnTheFly.PassengerService.Controllers
             _passengerConnection.Update(cpf, passenger);
             return Ok();
         }
-        [HttpDelete]
+        [HttpDelete("{cpf}")]
         public ActionResult Delete(string cpf)
         {
-            if (cpf is null) return NotFound("CPF não informado!");
+            if (cpf == null) return NotFound("CPF não informado!");
 
             _passengerConnection.Delete(cpf);
             return Ok(); ;

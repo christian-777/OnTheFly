@@ -1,4 +1,6 @@
-﻿using MongoDB.Driver;
+﻿using Microsoft.VisualBasic;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using Newtonsoft.Json;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
@@ -62,7 +64,8 @@ namespace OnTheFly.Connections
             // Troca de collection
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
             IMongoCollection<Flight> inactiveCollection = Database.GetCollection<Flight>("DeletedFlight");
-            Flight? flight = activeCollection.FindOneAndDelete(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure);
+
+            Flight? flight = activeCollection.FindOneAndDelete(f => f.Plane.RAB == RAB && f.Destiny.IATA == IATA && f.Departure == departure);
 
             if (flight != null) inactiveCollection.InsertOne(flight);
             return flight;

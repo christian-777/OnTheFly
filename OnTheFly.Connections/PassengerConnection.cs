@@ -50,10 +50,9 @@ namespace OnTheFly.Connections
                 var collection = Database.GetCollection<Passenger>("ActivePassenger");
                 var collectionofdelete = Database.GetCollection<Passenger>("InactivePassenger");
 
-                var trash = collection.Find(cpf).FirstOrDefault();
+                var trash = collection.FindOneAndDelete(p => p.CPF == cpf);
 
                 collectionofdelete.InsertOne(trash);
-                collection.FindOneAndDelete(p => p.CPF == cpf);
 
                 status = true;
 

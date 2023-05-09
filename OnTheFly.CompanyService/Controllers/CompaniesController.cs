@@ -59,6 +59,7 @@ namespace OnTheFly.CompanyService.Controllers
             string auxComplement = companyDTO.Address.Complement;
 
             Address address = _postOfficeService.GetAddress(companyDTO.Address.Zipcode).Result;
+            if (address == null) return BadRequest("Endereço não encontrado");
             address.Number= auxNumber;
             address.Complement = auxComplement;
             companyDTO.Address = address;
