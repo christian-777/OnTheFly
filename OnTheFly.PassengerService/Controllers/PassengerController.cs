@@ -21,103 +21,97 @@ namespace OnTheFly.PassengerService.Controllers
             _passengerConnection = passengerConnection;
             _postOfficeService = postOfficeService;
         }
+       
         [HttpGet]
-        public ActionResult<string> GetAll()
+        public ActionResult<List<Passenger>> GetAll()
         {
-            return JsonConvert.SerializeObject(_passengerConnection.FindAll(), Formatting.Indented);
+            var passengers = _passengerConnection.FindAll();
+            if (passengers == null)
+                return NotFound("Nenhum passageiro encontrado");
+            return passengers;
         }
-        [HttpGet("{cpf}", Name = "GetCPF")]
-        public ActionResult<string> GetBycpf(string cpf)
-        {
-            if (cpf is null) return NotFound("CPF não informado!");
 
-            return JsonConvert.SerializeObject(_passengerConnection.FindPassenger(cpf), Formatting.Indented);
+        [HttpGet("{cpf}", Name = "GetCPF")]
+        public ActionResult<Passenger> GetBycpf(string cpf)
+        {
+            if (cpf is null || cpf.Equals("string") || cpf=="") 
+                return BadRequest("CPF não informado!");
+
+            var passenger= _passengerConnection.FindPassenger(cpf);
+
+            if (passenger == null)
+                return NotFound("Passageiro com este cpf nao encontrado");
+
+            _passengerConnection.FindPassengerRestrict(cpf);
+
+            if (_passengerConnection.FindPassengerRestrict(cpf) == null)
+                return BadRequest("CPF restrito!");
+
+            return passenger;
         }
+
         [HttpPost]
         public ActionResult Insert(PassengerDTO passengerdto)
         {
-            if (passengerdto.CPF == null) return NotFound("CPF não informado!");
+            if (passengerdto.CPF == null || passengerdto.CPF.Equals("string") || passengerdto.CPF=="") 
+                return BadRequest("CPF não informado!");
 
-            string cpf = passengerdto.CPF.Replace('.', '\n').Replace('-', '\n');
-
+            string cpf = passengerdto.CPF.Replace(".", "").Replace("-", "");
 
             if (!long.TryParse(cpf, out var aux))
                 return BadRequest("CPF Inválido!");
+
+            if (!Passenger.ValidateCPF(cpf))
+                return BadRequest("CPF invalido");
+
+            passengerdto.Zipcode = passengerdto.Zipcode.Replace("-", "");
+            var auxAddress = _postOfficeService.GetAddress(passengerdto.Zipcode).Result;
+            if (auxAddress == null)
+                return NotFound("Endereço nao encontrado");
+
+            Address address = new()
+            {
+                Number = passengerdto.Number,
+                City=auxAddress.City,
+                Complement=auxAddress.Complement,
+                State = auxAddress.State,
+                Zipcode=passengerdto.Zipcode
+            };
+
+            if (auxAddress.Street != "")
+                address.Street = auxAddress.Street;
+            else
+            {
+                if (passengerdto.Street != "" || passengerdto.Street.Equals("string") || passengerdto.Street != null)
+                    address.Street = passengerdto.Street;
+                else
+                    return BadRequest("O campo Street é obrigatorio");
+            }
+
+
             Passenger passenger = new()
             {
-                CPF = passengerdto.CPF
+                CPF = cpf,
+                Address = address,
+                DtBirth = DateTime.Parse(passengerdto.DtBirth.Year + "/" + passengerdto.DtBirth.Month + "/" + passengerdto.DtBirth.Day),
+                DtRegister=DateTime.Now,
+                Gender=passengerdto.Gender,
+                Name = passengerdto.Name,
+                Phone=passengerdto.Phone,
+                Status=passengerdto.Status
             };
-            if (passenger.ValidateCPF(cpf))
-            {
-                //int number = passengerdto.Number;
 
-                Address? address = _postOfficeService.GetAddress(passengerdto.Zipcode).Result;
-                if (address == null)
-                    return BadRequest("Endereço inexistente!");
-
-                //passengerdto.Number = number;
-
-                passenger.Address = new Address();
-                if (address.Street == "" || address.Street == null)
-                {
-                    if (passengerdto.Street == "string" || passengerdto.Street == null)
-                        return NotFound("Rua não obtida! Informar manualmente.");
-                    else
-                        passenger.Address.Street = passengerdto.Street;
-                }
-                else passenger.Address.Street = address.Street;
-
-                passenger.Address.City = address.City;
-                passenger.Address.Complement = address.Complement;
-                passenger.Address.Number = passengerdto.Number;
-                passenger.Address.State = address.State;
-                passenger.Address.Zipcode = address.Zipcode;
-                passenger.CPF = cpf;
-                passenger.DtBirth = passengerdto.DtBirth;
-                passenger.DtRegister = passengerdto.DtRegister;
-                passenger.Gender = passengerdto.Gender;
-                passenger.Name = passengerdto.Name;
-                passenger.Phone = passengerdto.Phone;
-                passenger.Status = passengerdto.Status;
-
-                _passengerConnection.Insert(passenger);
+             if(_passengerConnection.Insert(passenger)!=null)
                 return Ok("Inserido com sucesso!");
-            }
-            return BadRequest("Erro ao inserir CPF!");
+            
+            return BadRequest("Erro ao inserir Passageiro!");
 
         }
 
-        [HttpPut]
-        public ActionResult Update(string cpf, PassengerForPut passengerput)
-        {
-            if (cpf is null) return NotFound("CPF não informado!");
-
-            Passenger? passenger = _passengerConnection.FindPassenger(cpf);
-            if (passenger == null) return NotFound();
-
-            if (passengerput.Name != "string")
-            {
-                passenger.Name = passengerput.Name;
-            }
-            if (passengerput.Gender != "string")
-            {
-                passenger.Gender = passengerput.Gender;
-            }
-            if (passengerput.DtBirth != passenger.DtBirth)
-            {
-                passenger.DtRegister = passenger.DtRegister;
-            }
-            passenger.DtBirth = passengerput.DtBirth;
-            passenger.Phone = passengerput.Phone;
-            passenger.Address = passengerput.Address;
-
-            _passengerConnection.Update(cpf, passenger);
-            return Ok();
-        }
         [HttpDelete("{cpf}")]
         public ActionResult Delete(string cpf)
         {
-            if (cpf == null) return NotFound("CPF não informado!");
+            if (cpf == null) return BadRequest("CPF não informado!");
 
             _passengerConnection.Delete(cpf);
             return Ok(); ;

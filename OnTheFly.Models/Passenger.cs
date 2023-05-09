@@ -24,7 +24,7 @@ namespace OnTheFly.Models
         public bool Status { get; set; }
         public Address Address { get; set; }
 
-        public bool ValidateCPF(string cpf)
+        public static bool ValidateCPF(string cpf)
         {
 
             bool status = false;
@@ -76,7 +76,7 @@ namespace OnTheFly.Models
             }
             return status;
         }
-        public bool ValidateAge()
+        public static bool ValidateAge()
         {
             return (DateTime.Now.Subtract(this.DtBirth).TotalDays/30 >= 18*30) ? true : false;
         }

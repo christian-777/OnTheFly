@@ -13,8 +13,7 @@ namespace OnTheFly.Models.DTO
         public string Gender { get; set; }
         [StringLength(14)]
         public string? Phone { get; set; }
-        public DateTime DtBirth { get; set; }
-        public DateTime DtRegister { get; set; }
+        public DateDTO DtBirth { get; set; }
         public bool Status { get; set; }
         public string Zipcode { get; set; }
         public string Street { get; set; }

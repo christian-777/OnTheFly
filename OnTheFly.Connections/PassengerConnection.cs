@@ -23,18 +23,30 @@ namespace OnTheFly.Connections
         {
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
             collection.InsertOne(passenger);
-            return passenger;
+            var pass= collection.Find(p=>p.CPF==passenger.CPF).FirstOrDefault();
+            return pass;
         }
         public Passenger FindPassenger(string cpf)
         {
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
-            return collection.Find(c => c.CPF == cpf).FirstOrDefault();
+            var passenger = collection.Find(c => c.CPF == cpf).FirstOrDefault();
+            return passenger;
 
         }
+
+        public Passenger FindPassengerRestrict(string cpf)
+        {
+            var collection = Database.GetCollection<Passenger>("RestrictPassenger");
+            var restrictPassenger = collection.Find(p => p.CPF == cpf).FirstOrDefault();
+            return restrictPassenger;
+        }
+
+
         public List<Passenger> FindAll()
         {
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
-            return collection.Find(p => true).ToList();
+            var passengers= collection.Find(p => true).ToList();
+            return passengers;
         }
         public Passenger Update(string cpf, Passenger passenger)
         {
