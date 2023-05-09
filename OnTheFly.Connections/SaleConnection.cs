@@ -78,6 +78,5 @@ namespace OnTheFly.Connections
             }
             return status;
         }
-        */
     }
 }
