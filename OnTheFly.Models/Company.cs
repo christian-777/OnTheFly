@@ -10,7 +10,7 @@ namespace OnTheFly.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
 
-        [StringLength(19)]
+        [StringLength(14)]
         public string Cnpj { get; set; }
 
         [StringLength(30)]

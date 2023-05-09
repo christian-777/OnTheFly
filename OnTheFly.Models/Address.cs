@@ -6,7 +6,7 @@ namespace OnTheFly.Models
     public class Address
     {
         [JsonProperty("cep")]
-        [StringLength(9)]
+        [StringLength(8)]
         public string Zipcode { get; set; }
 
         [JsonProperty("logradouro")]

@@ -19,7 +19,7 @@ namespace OnTheFly.PostOfficeService
             }
             catch (HttpRequestException e)
             {
-                return null;
+                throw;
             }
         }
     }
