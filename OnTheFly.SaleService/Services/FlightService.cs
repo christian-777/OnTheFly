@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using OnTheFly.Models;
 
@@ -17,7 +18,7 @@ namespace OnTheFly.SaleService.Services
                 jsonSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
                 string jsonDate = JsonConvert.SerializeObject(departure, jsonSettings);
 
-                
+
 
                 HttpResponseMessage res = await _httpClient.GetAsync("https://localhost:5003/api/Flight/" + IATA + ", " + RAB + ", " + jsonDate);
                 if (!res.IsSuccessStatusCode) return new Flight();
