@@ -46,9 +46,11 @@ namespace OnTheFly.Connections
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
 
-            var filter = Builders<Flight>.Filter.Eq("IATA", IATA)
-                & Builders<Flight>.Filter.Eq("RAB", RAB)
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA)
+                & Builders<Flight>.Filter.Eq("Plane.RAB", RAB)
                 & Builders<Flight>.Filter.Eq("Departure", departure);
+
+            var res = activeCollection.Find(filter);
 
             var update = Builders<Flight>.Update.Set("Sales", salesNumber);
             activeCollection.UpdateOne(filter, update);
