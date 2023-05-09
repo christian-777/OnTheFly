@@ -11,9 +11,10 @@ namespace OnTheFly.CompanyService.Services
         {
             HttpContent httpContent = new StringContent(JsonConvert.SerializeObject(airCraftDTO), Encoding.UTF8, "application/json");
             HttpResponseMessage res = await _httpClient.PostAsync("https://localhost:5000/api/AirCraft/", httpContent);
-            if (!res.IsSuccessStatusCode) return new AirCraft();
+            if (!res.IsSuccessStatusCode) return null;
             string content = await res.Content.ReadAsStringAsync();
             AirCraft? result = JsonConvert.DeserializeObject<AirCraft>(content);
+
             return result;
         }
     }

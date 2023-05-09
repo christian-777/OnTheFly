@@ -16,10 +16,11 @@ namespace OnTheFly.CompanyService.Controllers
         private readonly PostOfficesService _postOfficeService;
         private readonly AircraftService _aircraftService;
 
-        public CompaniesController(CompanyConnection companyConnection, PostOfficesService postOfficeService)
+        public CompaniesController(CompanyConnection companyConnection, PostOfficesService postOfficeService, AircraftService aircraftService)
         {
             _companyConnection = companyConnection;
             _postOfficeService = postOfficeService;
+            _aircraftService = aircraftService;
         }
 
         [HttpGet]
@@ -52,7 +53,7 @@ namespace OnTheFly.CompanyService.Controllers
             return JsonConvert.SerializeObject(_companyConnection.FindByCnpj(cnpj), Formatting.Indented);
         }
 
-        [HttpPut("/nomefantasia/{cnpj},{nameOPT}", Name = "Atualização do Nome Fantasia")]
+        [HttpPatch("/nomefantasia/{cnpj},{nameOPT}", Name = "Atualização do Nome Fantasia")]
         public async Task<ActionResult<string>> UpdateNameOPT(string cnpj, string nameOPT)
         {
             if (_companyConnection.FindAll().Where(x => x.Cnpj == cnpj) == null)
@@ -63,7 +64,7 @@ namespace OnTheFly.CompanyService.Controllers
             return Accepted();
         }
 
-        [HttpPut("/status/{cnpj},{status}", Name = "Atualização do Status")]
+        [HttpPatch("/status/{cnpj},{status}", Name = "Atualização do Status")]
         public async Task<ActionResult<string>> UpdateStatus(string cnpj, bool status)
         {
             if (_companyConnection.FindAll().Where(x => (x.Cnpj == cnpj) && (x.Status == false)).FirstOrDefault() is not null)
@@ -145,7 +146,9 @@ namespace OnTheFly.CompanyService.Controllers
 
                 var insertCompany = _companyConnection.Insert(companyDTO);
 
-                if (_aircraftService.InsertAircraft(companyDTO.AirCraftDTO) is null)
+                companyDTO.AirCraftDTO.Company = companyDTO.Cnpj;
+
+                if (_aircraftService.InsertAircraft(companyDTO.AirCraftDTO) == null)
                     return BadRequest("Não foi possível inserir o avião!");
 
                 return JsonConvert.SerializeObject(insertCompany);

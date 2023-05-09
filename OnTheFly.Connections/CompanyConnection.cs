@@ -90,7 +90,7 @@ namespace OnTheFly.Connections
             var filter = Builders<Company>.Filter.Eq("Cnpj", cnpj);
             var update = Builders<Company>.Update.Set("Status", status);
 
-            var collection = _dataBase.GetCollection<Company>("ActiveCompanies");
+            var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
             collection.UpdateOne(filter, update);
         }
     }
