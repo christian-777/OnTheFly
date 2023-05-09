@@ -21,7 +21,7 @@ namespace OnTheFly.Connections
             {
                 Address = companyDTO.Address,
                 Cnpj = companyDTO.Cnpj,
-                DtOpen = DateOnly.Parse(companyDTO.DtOpen.Year + "/" + companyDTO.DtOpen.Month + "/" + companyDTO.DtOpen.Day),
+                DtOpen = companyDTO.DtOpen,
                 Name = companyDTO.Name,
                 NameOPT = companyDTO.NameOPT,
                 Status = companyDTO.Status

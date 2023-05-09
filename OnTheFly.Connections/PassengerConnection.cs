@@ -28,7 +28,7 @@ namespace OnTheFly.Connections
                 Name = passengerdto.Name,
                 Gender = passengerdto.Gender,
                 Phone = passengerdto.Phone,
-                DtBirth = DateOnly.Parse(passengerdto.DtBirth.Year + "/" + passengerdto.DtBirth.Month + "/" + passengerdto.DtBirth.Day),
+                DtBirth = passengerdto.DtBirth,
                 DtRegister = passengerdto.DtRegister,
                 Status = passengerdto.Status
             };

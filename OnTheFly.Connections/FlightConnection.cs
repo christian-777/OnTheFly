@@ -27,7 +27,7 @@ namespace OnTheFly.Connections
             };
             #endregion
 
-            var activeCollection = Database.GetCollection<Flight>("ActiveFlight");
+            var activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
 
             activeCollection.InsertOne(flight);
             return flight;
@@ -35,19 +35,23 @@ namespace OnTheFly.Connections
 
         public Flight? Get(string IATA, string RAB, DateTime departure)
         {
-            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActiveFlight");
+            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
             return activeCollection.Find(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure).FirstOrDefault();
+        }
+
+        public void Update(string IATA, string RAB, DateTime departure, Flight flight)
+        {
+            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
+            activeCollection.ReplaceOne(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure, flight);
         }
 
         public Flight Delete(string IATA, string RAB, DateTime departure)
         {
             // Troca de collection
-            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActiveFlight");
-            IMongoCollection<Flight> inactiveCollection = Database.GetCollection<Flight>("InactiveFlight");
+            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
+            IMongoCollection<Flight> inactiveCollection = Database.GetCollection<Flight>("DeletedFlight");
             Flight? flight = activeCollection.FindOneAndDelete(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure);
 
-            // Trocando status para cancelado (false)
-            flight.Status = false;
             if (flight != null) inactiveCollection.InsertOne(flight);
             return flight;
         }

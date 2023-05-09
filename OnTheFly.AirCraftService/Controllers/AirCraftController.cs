@@ -65,6 +65,7 @@ namespace OnTheFly.AirCraftService.Controllers
                 DtLastFlight= airCraftDTO.DtLastFlight,
                 DtRegistry= airCraftDTO.DtRegistry,
                 RAB=airCraftDTO.RAB
+                
             };
             
             try
@@ -79,12 +80,20 @@ namespace OnTheFly.AirCraftService.Controllers
         }
 
         [HttpPut("{RAB}")]
-        public async Task<ActionResult<string>> PostAirCraft(string RAB, AirCraft airCraft)
+        public async Task<ActionResult<string>> PutAirCraft(string RAB, AirCraft airCraft)
         {
             if (CompanyService.GetCompany(airCraft.Company.Cnpj) == null)
                 return NoContent();
 
             return JsonConvert.SerializeObject(_airCraftConnection.Update(RAB, airCraft), Formatting.Indented);
+        }
+
+        [HttpPatch("{RAB}")]
+        public async Task<ActionResult<string>> PatchAircraftDate(string RAB, [FromBody] DateTime DtLastFlight)
+        {
+            if (RAB == null || DtLastFlight == null) return NoContent();
+
+            return JsonConvert.SerializeObject(_airCraftConnection.PatchDate(RAB, DtLastFlight), Formatting.Indented);
         }
 
         [HttpDelete("{RAB}")]

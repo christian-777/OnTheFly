@@ -19,9 +19,9 @@ namespace OnTheFly.Models.DTO
         public char Gender { get; set; }
         [StringLength(14)]
         public string? Phone { get; set; }
-        public DateDTO DtBirth { get; set; }
+        public DateTime DtBirth { get; set; }
         public DateTime DtRegister { get; set; }
-        public bool? Status { get; set; }
+        public bool Status { get; set; }
         public Address Address { get; set; }
     }
 }
