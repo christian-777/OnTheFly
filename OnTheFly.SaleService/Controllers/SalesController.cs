@@ -34,6 +34,7 @@ namespace OnTheFly.SaleService.Controllers
 
             return JsonConvert.SerializeObject(sales, Newtonsoft.Json.Formatting.Indented);
         }
+
         [HttpGet("/getsale/{CPF},{IATA},{RAB},{departure}")]
         public ActionResult<string> GetSale(string CPF, string IATA, string RAB, DateTime departure)
         {
@@ -47,7 +48,7 @@ namespace OnTheFly.SaleService.Controllers
         public ActionResult Insert(SaleDTO saleDTO)
         {
             if (saleDTO.Reserved == saleDTO.Sold)
-                return BadRequest("staus de venda ou agendamento invalido");
+                return BadRequest("Status de venda ou agendamento invalido");
 
             Flight? flight = _flight.GetFlight(saleDTO.IATA, saleDTO.RAB, saleDTO.Departure).Result;
             if (flight == null) return NotFound();
@@ -57,31 +58,32 @@ namespace OnTheFly.SaleService.Controllers
             {
                 Passenger? passenger = _passenger.GetPassenger(cpf).Result;
                 if (passenger == null) return NotFound();
-                if (passenger.Status) return BadRequest("passageiro impedido de comprar");
+                if (passenger.Status) return BadRequest("Existem passageiros impedidos de comprar");
                 passengers.Add(passenger);
             }
          
             if (passengers[0].ValidateAge())
-                return BadRequest("menores nao sao permitidos comprar passagens");
+                return BadRequest("Menores nao sao permitidos comprar passagens");
 
             foreach (var passenger in passengers)
             {
                 var elements=passengers.FindAll(p=>p==passenger);
                 if (elements.Count != 1)
-                    return BadRequest("Nao eprmitida a copra de mais de 1 passagem por passageiro");
+                    return BadRequest("Não é permitida a compra de mais de uma passagem por passageiro");
             }
 
             if (passengers.Count + flight.Sales > flight.Plane.Capacity)
-                return BadRequest("a quantidade de passagens excede a capacidade do aviao, por favor tente em outro voo");
+                return BadRequest("A quantidade de passagens excede a capacidade do avião");
 
             if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
-                return BadRequest("nao foi possivel atualizar o voo");
+                return BadRequest("Não foi possível atualizar o voo");
             
             _saleConnection.Insert(saleDTO, flight, passengers);
             return Ok();
         }
-        [HttpPut("/sell/{CPF},{IATA},{RAB},{departure}")]
-        public ActionResult Update(string CPF, string IATA, string RAB, DateTime departure)
+
+        [HttpPatch("/sell/{CPF},{IATA},{RAB},{departure}")]
+        public ActionResult PatchSaleStatus(string CPF, string IATA, string RAB, DateTime departure)
         {
             var sale = _saleConnection.FindSale(CPF, IATA, RAB, departure);
             if (sale == null) return NotFound();
@@ -95,6 +97,7 @@ namespace OnTheFly.SaleService.Controllers
             else
                 return BadRequest("Falha ao atualizar status");
         }
+
         [HttpDelete("/delete/{CPF},{IATA},{RAB},{departure}")]
         public ActionResult Delete(string CPF, string IATA, string RAB, DateTime departure)
         {
