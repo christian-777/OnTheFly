@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using OnTheFly.Models;
 
@@ -33,7 +34,7 @@ namespace OnTheFly.SaleService.Services
             }
         }
 
-        public async Task<Flight> PatchFlight(string IATA, string RAB, DateTime departure, int salesNumber)
+        public async Task<Flight> PatchFlight(string IATA, string RAB, BsonDateTime departure, int salesNumber)
         {
             try
             {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using OnTheFly.Connections;
 using OnTheFly.FlightService.Services;
@@ -23,11 +24,17 @@ namespace OnTheFly.FlightService.Controllers
         }
 
         [HttpGet("{IATA}, {RAB}, {departure}")]
-        public ActionResult<string> Get(string IATA, string RAB, DateTime? departure)
+        public ActionResult<string> Get(string IATA, string RAB, string departure)
         {
-           
             if (IATA == null || RAB == null || departure == null) return NoContent();
-            Flight? flight = _flight.Get(IATA, RAB, departure.Value);
+
+            bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
+            if (!isDate) return BadRequest("Formato de data não reconhecido");
+
+            BsonDateTime departureBSON = BsonDateTime.Create(departureDT.Date);
+            if (departureBSON == null) return BadRequest("Formato de data não reconhecido");
+
+            Flight? flight = _flight.Get(IATA, RAB, departureBSON);
 
             if (flight == null) return NotFound();
 

@@ -36,7 +36,7 @@ namespace OnTheFly.Connections
             return flight;
         }
 
-        public Flight? Get(string IATA, string RAB, DateTime departure)
+        public Flight? Get(string IATA, string RAB, BsonDateTime departure)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
             return activeCollection.Find(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure).FirstOrDefault();
