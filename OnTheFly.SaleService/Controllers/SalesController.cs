@@ -80,7 +80,7 @@ namespace OnTheFly.SaleService.Controllers
             foreach (string cpf in saleDTO.Passengers)
             {
                 Passenger? passenger = _passenger.GetPassenger(cpf).Result;
-                if (passenger == null) return NotFound();
+                if (passenger == null) return NotFound("Passageiro não encontrado");
                 if (!passenger.Status) return BadRequest("Existem passageiros impedidos de comprar");
                 passengers.Add(passenger.CPF);
             }
