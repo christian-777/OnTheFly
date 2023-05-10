@@ -11,7 +11,6 @@ namespace OnTheFly.AirCraftService.Services
         {
             try
             {
-                //falta colocar a porta do microserviço de company
                 HttpResponseMessage response = await client.GetAsync("https://localhost:5001/api/Companies/" + cnpj);
                 response.EnsureSuccessStatusCode();
                 string ender = await response.Content.ReadAsStringAsync();
