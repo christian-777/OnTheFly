@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using System.Xml.XPath;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using OnTheFly.Models.DTO;
@@ -78,9 +79,14 @@ namespace OnTheFly.Models
             }
             return status;
         }
-        public static bool ValidateAge(Passenger passenger)
+        public static int ValidateAge(Passenger passenger)
         {
-            return (DateTime.Now.Subtract(passenger.DtBirth).TotalDays/30 >= 18*30) ? true : false;
+            var result = DateTime.Now.Year - passenger.DtBirth.Year; 
+            if (DateTime.Now.Month < passenger.DtBirth.Month || (DateTime.Now.Month == passenger.DtBirth.Month && DateTime.Now.Day < passenger.DtBirth.Day))
+            {
+                result--;
+            }
+            return result;
         }
     }
 }

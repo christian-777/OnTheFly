@@ -64,6 +64,8 @@ namespace OnTheFly.SaleService.Controllers
         [HttpPost]
         public ActionResult Insert(SaleDTO saleDTO)
         {
+            if (saleDTO.Passengers == null) return BadRequest("O número de passageiros está nulo");
+
             if (saleDTO.Reserved == saleDTO.Sold)
                 return BadRequest("Status de venda ou agendamento invalido");
 
@@ -89,16 +91,16 @@ namespace OnTheFly.SaleService.Controllers
             if (flight == null) return NotFound();
 
             List<string> passengers = new List<string>();
+
             foreach (string cpf in saleDTO.Passengers)
             {
                 Passenger? passenger = _passenger.GetPassenger(cpf).Result;
                 if (passenger == null) return NotFound("Passageiro não encontrado");
                 if (!passenger.Status) return BadRequest("Existem passageiros impedidos de comprar");
+                if (Passenger.ValidateAge(passenger) < 18 && passengers.Count == 0) return Unauthorized("Menores de idade não podem ser o cadastrante da venda");
+
                 passengers.Add(passenger.CPF);
             }
-         
-            if (Passenger.ValidateAge(_passenger.GetPassenger(passengers[0]).Result))
-                return BadRequest("Menores nao sao permitidos comprar passagens");
 
             foreach (var passenger in passengers)
             {
@@ -168,6 +170,7 @@ namespace OnTheFly.SaleService.Controllers
 
         [HttpPut("/UpdateSale/{CPF},{IATA},{RAB},{departure}")]
         public ActionResult UpdateSale(string CPF, string IATA, string RAB, string departure)
+        
         {
             var data = departure.Split('-');
             DateTime date;
