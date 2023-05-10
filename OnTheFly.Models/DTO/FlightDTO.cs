@@ -10,10 +10,10 @@ namespace OnTheFly.Models.DTO
 {
     public class FlightDTO
     {
-        public Airport Destiny { get; set; }
-        public AirCraftDTO Plane { get; set; }
+        public string IATA { get; set; }
+        public string RAB { get; set; }
         public int Sales { get; set; }
-        public DateTime Departure { get; set; }
+        public DateDTO Departure { get; set; }
         public bool Status { get; set; }
     }
 }

@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.ComponentModel;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson.Serialization.IdGenerators;
 using Newtonsoft.Json;
 using OnTheFly.Connections;
 using OnTheFly.Models;
@@ -19,151 +22,377 @@ namespace OnTheFly.PassengerService.Controllers
             _passengerConnection = passengerConnection;
             _postOfficeService = postOfficeService;
         }
+       
         [HttpGet]
-        public ActionResult<string> GetAll()
+        public ActionResult<List<Passenger>> GetAll()
         {
-            if (_passengerConnection.FindAll().Count == 0)
-                return Ok("Lista sem CPF");
-            return JsonConvert.SerializeObject(_passengerConnection.FindAll(), Formatting.Indented);
+            var passengers = _passengerConnection.FindAll();
+            if (passengers.Count==0)
+                return NotFound("Nenhum passageiro encontrado");
+            return passengers;
         }
+
         [HttpGet("{CPF}", Name = "GetCPF")]
-        public ActionResult<string> GetBycpf(string CPF)
+        public ActionResult<Passenger> GetBycpf(string CPF)
         {
-            if (CPF is null) return NotFound("CPF não informado!");
-            if (_passengerConnection.FindPassengerRestrict(CPF) is not null)
-                return BadRequest("CPF restrito!");
-            return JsonConvert.SerializeObject(_passengerConnection.FindPassenger(CPF), Formatting.Indented);
+            if (CPF is null || CPF.Equals("string") || CPF=="") 
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+            if (Passenger.ValidateCPF(CPF) == false)
+                return BadRequest("CPF invalido");
+
+            var passenger= _passengerConnection.FindPassenger(CPF);
+
+            if (passenger == null)
+                return NotFound("Passageiro com este cpf nao encontrado");
+
+            return passenger;
         }
-        [HttpGet("/Restrict/{CPF}", Name = "GetCPFRestrict")]
-        public ActionResult<string> GetBycpfRestrict(string CPF)
-        {
-            if (CPF is null) return NotFound("CPF não informado!");
-  
-            return JsonConvert.SerializeObject(_passengerConnection.FindPassengerRestrict(CPF.Replace(".", "").Replace("-", "")), Formatting.Indented);
-        }
+
         [HttpPost]
         public ActionResult Insert(PassengerDTO passengerdto)
         {
-            if (passengerdto.CPF == null) return NotFound("CPF não informado!");
+            if (passengerdto.CPF == null || passengerdto.CPF.Equals("string") || passengerdto.CPF=="") 
+                return BadRequest("CPF não informado!");
 
-            string cpf = passengerdto.CPF.Replace(".", "").Replace("-", "");
-            if (_passengerConnection.FindPassenger(cpf) is not null)
-                return BadRequest("CPF já cadastrado!");
+            var cpf = passengerdto.CPF.Replace(".", "").Replace("-", "");
 
-            if (!long.TryParse(cpf, out var aux))
-                return BadRequest("CPF Inválido!");
-            Passenger passenger = new()
+            if (Passenger.ValidateCPF(cpf)==false)
+                return BadRequest("CPF invalido");
+
+            if (_passengerConnection.FindPassengerRestrict(passengerdto.CPF) != null)
+                return BadRequest("Passageiro restrito!!");
+
+            if (_passengerConnection.FindPassengerDeleted(passengerdto.CPF) != null)
+                return BadRequest("Impossivel inserir este passageiro");
+
+            if (_passengerConnection.FindPassenger(passengerdto.CPF) != null)
+                return Conflict("Pasageiro ja cadastrado");
+
+            DateTime date;
+            try
             {
-                CPF = passengerdto.CPF
+                date = DateTime.Parse(passengerdto.DtBirth.Year + "/" + passengerdto.DtBirth.Month + "/" + passengerdto.DtBirth.Day);
+            }
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
+            if(DateTime.Now.Subtract(date).TotalDays < 0)
+                return BadRequest("Data invalida");
+
+            passengerdto.Zipcode = passengerdto.Zipcode.Replace("-", "");
+            var auxAddress = _postOfficeService.GetAddress(passengerdto.Zipcode).Result;
+            if (auxAddress == null)
+                return NotFound("Endereço nao encontrado");
+
+            if (passengerdto.Number == 0)
+                return BadRequest("Campo Number é obrigatorio");
+
+            Address address = new()
+            {
+                Number = passengerdto.Number,
+                City=auxAddress.City,
+                Complement=auxAddress.Complement,
+                State = auxAddress.State,
+                Zipcode=passengerdto.Zipcode
             };
 
-            if (_passengerConnection.FindPassengerRestrict(cpf) is not null)
-                return BadRequest("CPF restrito!");
-
-            if (passenger.ValidateCPF(cpf))
+            if (auxAddress.Street != "")
+                address.Street = auxAddress.Street;
+            else
             {
-                Address? address = _postOfficeService.GetAddress(passengerdto.Zipcode).Result;
-                if (address == null)
-                    return BadRequest("Endereço inexistente!");
-
-                passenger.Address = new();
-                if (address.Street == "" || address.Street is null)
-                {
-                    if (passengerdto.Street == "string" || passengerdto.Street is null)
-                        return NotFound("Rua não obtida! Informar manualmente.");
-                    else
-                        passenger.Address.Street = passengerdto.Street;
-                }
-                else passenger.Address.Street = address.Street;
-
-                passenger.Address.City = address.City;
-                passenger.Address.Complement = address.Complement;
-                passenger.Address.Number = passengerdto.Number;
-                passenger.Address.State = address.State;
-                passenger.Address.Zipcode = address.Zipcode;
-                passenger.CPF = cpf;
-                passenger.DtBirth = passengerdto.DtBirth;
-                passenger.DtRegister = passengerdto.DtRegister;
-                passenger.Gender = passengerdto.Gender;
-                passenger.Name = passengerdto.Name;
-                passenger.Phone = passengerdto.Phone;
-                passenger.Status = passengerdto.Status;
-
-                _passengerConnection.Insert(passenger);
-                return Ok("Inserido com sucesso!");
+                if (passengerdto.Street != "" || passengerdto.Street.Equals("string") || passengerdto.Street != null)
+                    address.Street = passengerdto.Street;
+                else
+                    return BadRequest("O campo Street é obrigatorio");
             }
-            return BadRequest("Erro ao inserir CPF!");
+
+
+            Passenger passenger = new()
+            {
+                CPF = cpf,
+                Address = address,
+                DtBirth = date,
+                DtRegister=DateTime.Now,
+                Gender=passengerdto.Gender,
+                Name = passengerdto.Name,
+                Phone=passengerdto.Phone,
+                Status=passengerdto.Status
+            };
+
+            var insertPassenger = _passengerConnection.Insert(passenger);
+             if (insertPassenger!=null)
+                return Created("","Inserido com sucesso!\n\n"+JsonConvert.SerializeObject(insertPassenger, Formatting.Indented));
+            
+            return BadRequest("Erro ao inserir Passageiro!");
 
         }
-        [HttpPost("/Restrict/{CPF}", Name = "InsertRestrict")]
-        public ActionResult InsertRestrict(string CPF)
-        {
-            var cpfrestrict = _passengerConnection.FindPassengerRestrict(CPF.Replace(".", "").Replace("-", ""));
-            _passengerConnection.Insert(cpfrestrict);
-            _passengerConnection.DeleteFull(cpfrestrict.CPF);
-            return Ok();
-        }
-        [HttpPut]
-        public ActionResult Update(string cpf, PassengerForPut passengerput)
-        {
-            if (cpf is null) return NotFound("CPF não informado!");
 
-            if (_passengerConnection.FindPassengerRestrict(cpf) is not null)
-                return BadRequest("CPF restrito!");
-
-            Passenger? passenger = _passengerConnection.FindPassenger(cpf);
-            if (passenger == null) return NotFound();
-
-            if (passengerput.Name != "string")
-            {
-                passenger.Name = passengerput.Name;
-            }
-            if (passengerput.Gender != "string")
-            {
-                passenger.Gender = passengerput.Gender;
-            }
-            if (passengerput.DtBirth != passenger.DtBirth)
-            {
-                passenger.DtRegister = passenger.DtRegister;
-            }
-            passenger.DtBirth = passengerput.DtBirth;
-            passenger.Phone = passengerput.Phone;
-            passenger.Address = passengerput.Address;
-
-            _passengerConnection.Update(cpf, passenger);
-            return Ok();
-        }
-        //[HttpPut("/Address/{CPF}, {Address}", Name = "UpdateAddress")]
-        //public ActionResult UpdateAddress(string CPF, Address address)
-        //{
-        //    var cpf = CPF.Replace(".", "").Replace("-", "");
-        //    if (_passengerConnection.FindPassengerRestrict(cpf) is not null)
-        //        return BadRequest("CPF restrito!");
-        //    _passengerConnection.FindPassenger(cpf);
-        //    return Ok();
-        //}
-        //[HttpPatch]
-        //public ActionResult
-        [HttpDelete("{CPF}")]
+        [HttpPost("/SendToDeleted/{CPF}")]
         public ActionResult Delete(string CPF)
         {
-            if (CPF is null) return NotFound("CPF não informado!");
-            if (_passengerConnection.FindPassenger(CPF) is null && _passengerConnection.FindPassengerRestrict(CPF) is null)
-                return BadRequest("CPF não encontrado no banco!");
+            if (CPF == null || CPF.Equals("string") || CPF == "") 
+                return BadRequest("CPF não informado!");
 
-            _passengerConnection.Delete(CPF.Replace(".", "").Replace("-", ""));
-            return Ok("CPF deletado com sucesso!");
+            CPF =CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            if (_passengerConnection.FindPassenger(CPF) != null || _passengerConnection.FindPassengerRestrict(CPF) != null)
+            {
+                if (_passengerConnection.Delete(CPF))
+                    return Ok("Passageiro deletado com sucesso!");
+                else
+                    return BadRequest("erro ao deletar");
+            }
+            return BadRequest("passageiro inexistente");
         }
-        [HttpDelete("/Restrict/{CPF}", Name = "Restrict")]
+
+        [HttpPost("/SendToRestricted/{CPF}")]
         public ActionResult Restrict(string CPF)
         {
-            if (CPF is null) return NotFound("CPF não informado!");
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
 
-            if (_passengerConnection.FindPassenger(CPF) is null)
-                return BadRequest("CPF não encontrado no banco!");
+            CPF = CPF.Replace(".", "").Replace("-", "");
 
-            _passengerConnection.Restrict(CPF);
-            return Ok("CPF restringido com sucesso!"); ;
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            if (_passengerConnection.FindPassenger(CPF) != null)
+            {
+                if (_passengerConnection.Restrict(CPF))
+                    return Ok("Passageiro restrito com sucesso!");
+                else
+                    return BadRequest("erro ao restringir");
+            }
+            return BadRequest("passageiro inexistente");
+        }
+
+        [HttpPost("/UnrestrictPassenger/{CPF}")]
+        public ActionResult Unrestrict(string CPF)
+        {
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            if (_passengerConnection.FindPassengerRestrict(CPF) != null)
+            {
+                if (_passengerConnection.Unrestrict(CPF))
+                    return Ok("Passageiro retirado da lista de restritos com sucesso!");
+                else
+                    return BadRequest("erro ao retirar da lista de restritos");
+            }
+            return BadRequest("passageiro nao esta na lista de restritos");
+        }
+
+        [HttpPost("/UndeletPassenger/{CPF}")]
+        public ActionResult UndeletPassenger(string CPF)
+        {
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            if (_passengerConnection.FindPassengerDeleted(CPF) != null)
+            {
+                if (_passengerConnection.UndeletPassenger(CPF))
+                    return Ok("Passageiro retirado da lista de deletados com sucesso!");
+                else
+                    return BadRequest("erro ao retirar da lista de deletados");
+            }
+            return BadRequest("passageiro nao esta na lista de deletados");
+        }
+
+        [HttpPut("/UpdateName/{CPF},{Name}")]
+        public ActionResult UpdateName(string CPF, string Name)
+        {
+            if(CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            var passenger = _passengerConnection.FindPassenger(CPF);
+            if (passenger != null)
+            {
+                passenger.Name = Name;
+                if (_passengerConnection.Update(CPF, passenger))
+                    return Ok("Nome do Passageiro atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o nome do Passageiro");
+            }
+            
+            return BadRequest("passageiro nao esta na lista");
+        }
+
+        [HttpPut("/UpdateGender/{CPF},{Gender}")]
+        public ActionResult UpdateGender(string CPF, string Gender)
+        {
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            if (Gender.Length != 1)
+                return BadRequest("O campo genero aceita apenas um caractere");
+
+            var passenger = _passengerConnection.FindPassenger(CPF);
+            if (passenger != null)
+            {
+                passenger.Gender = Gender;
+                if (_passengerConnection.Update(CPF, passenger))
+                    return Ok("Genero do Passageiro atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o genero do Passageiro");
+            }
+
+            return BadRequest("passageiro nao esta na lista");
+        }
+
+        [HttpPut("/UpdatePhone/{CPF},{Phone}")]
+        public ActionResult UpdatePhone(string CPF, string Phone)
+        {
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            if (Phone.Length > 14)
+                return BadRequest("Digite um telefone valido");
+
+            var passenger = _passengerConnection.FindPassenger(CPF);
+            if (passenger != null)
+            {
+                passenger.Phone = Phone;
+                if (_passengerConnection.Update(CPF, passenger))
+                    return Ok("Telefone do Passageiro atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o telefone do Passageiro");
+            }
+
+            return BadRequest("passageiro nao esta na lista");
+        }
+
+        [HttpPut("/UpdateDtBirth/{CPF}")]
+        public ActionResult UpdateDtBirth(string CPF, [FromBody] DateDTO DtBirth)
+        {
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            DateTime date;
+            try
+            {
+                date = DateTime.Parse(DtBirth.Year + "/" + DtBirth.Month + "/" + DtBirth.Day);
+            }
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
+            var passenger = _passengerConnection.FindPassenger(CPF);
+            if (passenger != null)
+            {
+                passenger.DtBirth = date;
+                if (_passengerConnection.Update(CPF, passenger))
+                    return Ok("Data de nascimento do Passageiro atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar a data de nascimento do Passageiro");
+            }
+
+            return BadRequest("passageiro nao esta na lista");
+        }
+
+        [HttpPut("/UpdateAddress/{CPF}")]
+        public ActionResult UpdateAddress(string CPF, Address address)
+        {
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            address.Zipcode = address.Zipcode.Replace("-", "");
+
+            var auxAddress = _postOfficeService.GetAddress(address.Zipcode).Result;
+            if (auxAddress == null)
+                return NotFound("Endereço nao encontrado");
+
+            if (address.Number == 0)
+                return BadRequest("Campo Number é obrigatorio");
+
+            address.City = auxAddress.City;
+            address.Complement = auxAddress.Complement;
+            address.State = auxAddress.State;
+
+            if (auxAddress.Street != "")
+                address.Street = auxAddress.Street;
+            else
+            {
+                if (address.Street == "" || address.Street.Equals("string") || address.Street == null)
+                    return BadRequest("O campo Street é obrigatorio");
+            }
+
+            var passenger = _passengerConnection.FindPassenger(CPF);
+            if (passenger != null)
+            {
+                passenger.Address = address;
+                if (_passengerConnection.Update(CPF, passenger))
+                    return Ok("Endereço do Passageiro atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o endereço do Passageiro");
+            }
+
+            return BadRequest("passageiro nao esta na lista");
+        }
+
+        [HttpPut("/ChangeStatus/{CPF}")]
+        public ActionResult ChangeStatus(string CPF)
+        {
+            if (CPF == null || CPF.Equals("string") || CPF == "")
+                return BadRequest("CPF não informado!");
+
+            CPF = CPF.Replace(".", "").Replace("-", "");
+
+            if (!Passenger.ValidateCPF(CPF))
+                return BadRequest("CPF invalido");
+
+            
+            var passenger = _passengerConnection.FindPassenger(CPF);
+            if (passenger != null)
+            {
+                passenger.Status = !passenger.Status;
+                if (_passengerConnection.Update(CPF, passenger))
+                    return Ok("Status do Passageiro atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o status do Passageiro");
+            }
+
+            return BadRequest("passageiro nao esta na lista");
         }
     }
 }

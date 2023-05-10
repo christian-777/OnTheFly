@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DocsBRValidator" Version="1.3.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -15,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OnTheFly.AirCraftService\OnTheFly.AirCraftService.csproj" />
     <ProjectReference Include="..\OnTheFly.Connections\OnTheFly.Connections.csproj" />
     <ProjectReference Include="..\OnTheFly.PostOfficeService\OnTheFly.PostOfficeService.csproj" />
   </ItemGroup>

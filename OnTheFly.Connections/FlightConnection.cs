@@ -16,7 +16,7 @@ namespace OnTheFly.Connections
             Database = client.GetDatabase("Flight");
         }
 
-        public Flight Insert(FlightDTO flightDTO, AirCraft aircraft, Airport airport)
+        public Flight Insert(FlightDTO flightDTO, AirCraft aircraft, Airport airport, DateTime date)
         {
             // Dados de flight
             #region flight
@@ -24,7 +24,7 @@ namespace OnTheFly.Connections
             {
                 Destiny = airport,
                 Plane = aircraft,
-                Departure = flightDTO.Departure,
+                Departure = date,
                 Status = flightDTO.Status,
                 Sales = flightDTO.Sales
             };
@@ -39,31 +39,60 @@ namespace OnTheFly.Connections
         public Flight? Get(string IATA, string RAB, BsonDateTime departure)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
-            return activeCollection.Find(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure).FirstOrDefault();
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA) & Builders<Flight>.Filter.Eq("Plane.RAB", RAB) & Builders<Flight>.Filter.Eq("Departure", departure);
+            return activeCollection.Find(filter).FirstOrDefault();
         }
 
-        public void PatchSalesNumber(string IATA, string RAB, BsonDateTime departure, int salesNumber)
+        public bool UpdateSales(string IATA, string RAB, BsonDateTime departure, int salesNumber)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
 
-            var filter = Builders<Flight>.Filter.Eq("IATA", IATA)
-                & Builders<Flight>.Filter.Eq("RAB", RAB)
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA)
+                & Builders<Flight>.Filter.Eq("Plane.RAB", RAB)
                 & Builders<Flight>.Filter.Eq("Departure", departure);
 
+            if (activeCollection.Find(filter) == null) return false;
             var update = Builders<Flight>.Update.Set("Sales", salesNumber);
-            activeCollection.UpdateOne(filter, update);
+
+            return activeCollection.UpdateOne(filter, update).IsAcknowledged;
         }
 
-        public Flight Delete(string IATA, string RAB, BsonDateTime departure)
+        public bool UpdateStatus(string IATA, string RAB, BsonDateTime departure)
+        {
+            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
+
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA)
+                & Builders<Flight>.Filter.Eq("Plane.RAB", RAB)
+                & Builders<Flight>.Filter.Eq("Departure", departure);
+
+            Flight? flight = activeCollection.Find(filter).FirstOrDefault();
+
+            if (flight == null) return false;
+
+            bool status = (flight.Status == true) ? false : true;
+
+            var update = Builders<Flight>.Update.Set("Status", status);
+
+            return activeCollection.UpdateOne(filter, update).IsAcknowledged;
+        }
+
+        public bool Delete(string IATA, string RAB, BsonDateTime departure)
         {
             // Troca de collection
-            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
-            IMongoCollection<Flight> inactiveCollection = Database.GetCollection<Flight>("DeletedFlight");
+            IMongoCollection<Flight> collection = Database.GetCollection<Flight>("ActivatedFlight");
+            IMongoCollection<Flight> collectionDeleted = Database.GetCollection<Flight>("DeletedFlight");
 
-            Flight? flight = activeCollection.FindOneAndDelete(f => f.Plane.RAB == RAB && f.Destiny.IATA == IATA && f.Departure == departure);
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA)
+                & Builders<Flight>.Filter.Eq("Plane.RAB", RAB)
+                & Builders<Flight>.Filter.Eq("Departure", departure);
 
-            if (flight != null) inactiveCollection.InsertOne(flight);
-            return flight;
+            if (collection.Find(filter) == null) return false;
+
+            Flight? flight = collection.FindOneAndDelete(filter);
+            if (flight == null) return false;
+
+            collectionDeleted.InsertOne(flight);
+            return true;
         }
     }
 }
