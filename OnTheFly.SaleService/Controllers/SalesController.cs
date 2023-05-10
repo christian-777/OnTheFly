@@ -98,7 +98,7 @@ namespace OnTheFly.SaleService.Controllers
             if (passengers.Count + flight.Sales > flight.Plane.Capacity)
                 return BadRequest("A quantidade de passagens excede a capacidade do avião");
 
-            _flight.PatchSalesNumber(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count);
+            _flight.UpdateSales(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count);
                
 
             Sale sale = new Sale

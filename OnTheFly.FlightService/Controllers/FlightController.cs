@@ -44,7 +44,7 @@ namespace OnTheFly.FlightService.Controllers
 
             Flight? flight = _flight.Get(IATA, RAB, bsonDate);
 
-            if (flight == null) return NotFound();
+            if (flight == null) return NotFound("Voo não encontrado");
 
             return JsonConvert.SerializeObject(flight, Formatting.Indented);
         }
@@ -64,14 +64,15 @@ namespace OnTheFly.FlightService.Controllers
             }
             // Verificar se airport existe e é válido
             Airport? airport = _airport.GetValidDestiny(flightDTO.IATA).Result;
-            if (airport == null) return NotFound();
-            if (airport.Country != "BR") return Unauthorized();
+            if (airport == null) return NotFound("Aeroporto não encotrado");
+            if (airport.Country == null || airport.Country == "") NotFound("País de origem do aeroporto não encontrado");
+            if (airport.Country != "BR") return Unauthorized("Não são autorizados voos fora do Brasil");
 
             // Verificar se aircraft existe e é válido
             AirCraft? aircraft = _aircraft.GetAircraft(flightDTO.RAB).Result;
-            if (aircraft == null) return NotFound();
-            if (aircraft.Company == null) return NotFound();
-            if (aircraft.Company.Status == false) return Unauthorized();
+            if (aircraft == null) return NotFound("Avião não encontrado");
+            if (aircraft.Company == null) return NotFound("Companhia de avião não encontrada");
+            if (aircraft.Company.Status == false) return Unauthorized("Companhia não autorizada para voos");
 
             // Verificação se data de voo é depois do último voo do aircraft
             if (aircraft.DtLastFlight != null && aircraft.DtLastFlight > date)
@@ -90,23 +91,48 @@ namespace OnTheFly.FlightService.Controllers
             // Inserção de flight
             Flight? flight = _flight.Insert(flightDTO, aircraft, airport, date);
 
-            if (flight == null) return BadRequest();
-            return Ok();
+            if (flight == null) return BadRequest("Não foi possivel enviar voo para o banco");
+            return Ok("Voo armazenado no banco com sucesso!");
         }
 
-        [HttpPatch("{IATA}, {RAB}, {departure}, {salesNumber}")]
-        public ActionResult PatchSales(string IATA, string RAB, string departure, int salesNumber)
+        [HttpPut("/UpdateStatus/{IATA}, {RAB}, {departure}")]
+        public ActionResult UpdateStatus(string IATA, string RAB, string departure)
         {
             bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
             if (!isDate) return BadRequest("Formato de data não reconhecido");
 
+            if (departureDT.Hour != 12)
+                departureDT = departureDT.AddHours(9);
+
             BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
 
             Flight? flight = _flight.Get(IATA, RAB, bsonDate);
-            if (flight == null) return NotFound();
+            if (flight == null) return NotFound("Voo não encontrado");
 
-            _flight.PatchSalesNumber(IATA, RAB, bsonDate, salesNumber);
-            return Ok();
+            if (!_flight.UpdateStatus(IATA, RAB, bsonDate))
+                return BadRequest("Não foi possível atualizar o status do voo");
+
+            return Ok("Voo atualizado com sucesso!");
+        }
+
+        [HttpPut("/UpdateSales/{IATA}, {RAB}, {departure}, {salesNumber}")]
+        public ActionResult UpdateSales(string IATA, string RAB, string departure, int salesNumber)
+        {
+            bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
+            if (!isDate) return BadRequest("Formato de data não reconhecido");
+
+            if (departureDT.Hour != 12)
+                departureDT = departureDT.AddHours(9);
+
+            BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
+
+            Flight? flight = _flight.Get(IATA, RAB, bsonDate);
+            if (flight == null) return NotFound("Voo não encontrado");
+
+            if (!_flight.UpdateSales(IATA, RAB, bsonDate, salesNumber))
+                return BadRequest("Não foi possível atualizar o número de vendas do voo");
+
+            return Ok("Voo atualizado com sucesso!");
         }
 
         [HttpDelete("{IATA}, {RAB}, {departure}")]
@@ -117,12 +143,15 @@ namespace OnTheFly.FlightService.Controllers
             bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
             if (!isDate) return BadRequest("Formato de data não reconhecido");
 
+            if (departureDT.Hour != 12)
+                departureDT = departureDT.AddHours(9);
+
             BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
 
-            Flight? flight = _flight.Delete(IATA, RAB, departureDT);
+            if (!_flight.Delete(IATA, RAB, departureDT)) 
+                return BadRequest("Não foi possível deletar o voo");
 
-            if (flight == null) return NotFound();
-            return Ok();
+            return Ok("Voo deletado com sucesso!");
         }
     }
 }

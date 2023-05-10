@@ -43,7 +43,7 @@ namespace OnTheFly.Connections
             return activeCollection.Find(filter).FirstOrDefault();
         }
 
-        public void PatchSalesNumber(string IATA, string RAB, BsonDateTime departure, int salesNumber)
+        public bool UpdateSales(string IATA, string RAB, BsonDateTime departure, int salesNumber)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
 
@@ -51,22 +51,48 @@ namespace OnTheFly.Connections
                 & Builders<Flight>.Filter.Eq("Plane.RAB", RAB)
                 & Builders<Flight>.Filter.Eq("Departure", departure);
 
-            var res = activeCollection.Find(filter);
-
+            if (activeCollection.Find(filter) == null) return false;
             var update = Builders<Flight>.Update.Set("Sales", salesNumber);
-            activeCollection.UpdateOne(filter, update);
+
+            return activeCollection.UpdateOne(filter, update).IsAcknowledged;
         }
 
-        public Flight Delete(string IATA, string RAB, BsonDateTime departure)
+        public bool UpdateStatus(string IATA, string RAB, BsonDateTime departure)
+        {
+            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
+
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA)
+                & Builders<Flight>.Filter.Eq("Plane.RAB", RAB)
+                & Builders<Flight>.Filter.Eq("Departure", departure);
+
+            Flight? flight = activeCollection.Find(filter).FirstOrDefault();
+
+            if (flight == null) return false;
+
+            bool status = (flight.Status == true) ? false : true;
+
+            var update = Builders<Flight>.Update.Set("Status", status);
+
+            return activeCollection.UpdateOne(filter, update).IsAcknowledged;
+        }
+
+        public bool Delete(string IATA, string RAB, BsonDateTime departure)
         {
             // Troca de collection
-            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
-            IMongoCollection<Flight> inactiveCollection = Database.GetCollection<Flight>("DeletedFlight");
+            IMongoCollection<Flight> collection = Database.GetCollection<Flight>("ActivatedFlight");
+            IMongoCollection<Flight> collectionDeleted = Database.GetCollection<Flight>("DeletedFlight");
 
-            Flight? flight = activeCollection.FindOneAndDelete(f => f.Plane.RAB == RAB && f.Destiny.IATA == IATA && f.Departure == departure);
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA)
+                & Builders<Flight>.Filter.Eq("Plane.RAB", RAB)
+                & Builders<Flight>.Filter.Eq("Departure", departure);
 
-            if (flight != null) inactiveCollection.InsertOne(flight);
-            return flight;
+            if (collection.Find(filter) == null) return false;
+
+            Flight? flight = collection.FindOneAndDelete(filter);
+            if (flight == null) return false;
+
+            collectionDeleted.InsertOne(flight);
+            return true;
         }
     }
 }
