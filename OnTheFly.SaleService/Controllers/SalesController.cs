@@ -53,7 +53,7 @@ namespace OnTheFly.SaleService.Controllers
         [HttpPost]
         public ActionResult Insert(SaleDTO saleDTO)
         {
-            if (saleDTO.Reserved == saleDTO.Sold)
+            /*if (saleDTO.Reserved == saleDTO.Sold)
                 return BadRequest("Status de venda ou agendamento invalido");
 
             Flight? flight = _flightService.Get(saleDTO.IATA, saleDTO.RAB, saleDTO.Departure);
@@ -78,11 +78,11 @@ namespace OnTheFly.SaleService.Controllers
                     return BadRequest("Não é permitida a compra de mais de uma passagem por passageiro");
             }
 
-           /* if (passengers.Count + flight.Sales > flight.Plane.Capacity)
-                return BadRequest("A quantidade de passagens excede a capacidade do avião"); */
+            if (passengers.Count + flight.Sales > flight.Plane.Capacity)
+                return BadRequest("A quantidade de passagens excede a capacidade do avião"); 
 
-            /*if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
-                return BadRequest("nao foi possivel atualizar o voo");*/
+            if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
+                return BadRequest("nao foi possivel atualizar o voo");
 
             Sale sale = new Sale
             {
@@ -133,7 +133,7 @@ namespace OnTheFly.SaleService.Controllers
                         body: bytesMessage
                         );
                 }
-            }
+            }*/
             return Accepted();
 
             //_saleConnection.Insert(sale);

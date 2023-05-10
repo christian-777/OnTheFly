@@ -4,7 +4,6 @@ namespace OnTheFly.Models.DTO
 {
     public class PassengerDTO
     {
-        public string Id { get; set; }
         [StringLength(14)]
         public string CPF { get; set; }
         [StringLength(30)]

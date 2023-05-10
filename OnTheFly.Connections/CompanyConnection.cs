@@ -16,22 +16,12 @@ namespace OnTheFly.Connections
             _dataBase = client.GetDatabase("Company");
         }
 
-        public Company Insert(CompanyDTO companyDTO)
+        public Company Insert(Company company)
         {
-            Company company = new Company()
-            {
-                Address = companyDTO.Address,
-                Cnpj = companyDTO.Cnpj,
-                DtOpen = companyDTO.DtOpen,
-                Name = companyDTO.Name,
-                NameOPT = companyDTO.NameOPT,
-                Status = companyDTO.Status
-            };
-            
-             var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
-             collection.InsertOne(company);
-
-            return company;
+            var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
+            collection.InsertOne(company);
+            var com = collection.Find(c => c.Cnpj == company.Cnpj).FirstOrDefault();
+            return com;
         }
 
         public List<Company> FindAll()
@@ -52,34 +42,122 @@ namespace OnTheFly.Connections
             return collection.Find(x => x.Cnpj == cnpj).FirstOrDefault();
         }
 
-        public void Delete(string cnpj)
+        public Company FindByCnpjDeleted(string cnpj)
         {
-            var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
-            var collection2 = _dataBase.GetCollection<Company>("DeletedCompanies");
-
-            var trash = collection.Find<Company>(x => x.Cnpj == cnpj).FirstOrDefault();
-
-            collection2.InsertOne(trash);
-
-            collection.DeleteOne(x => x.Cnpj == cnpj);
+            var collection = _dataBase.GetCollection<Company>("DeletedCompanies");
+            return collection.Find(x => x.Cnpj == cnpj).FirstOrDefault();
         }
 
-        public void DeleteByRestricted(string cnpj)
+        public bool Delete(string cnpj)
         {
-            var collection = _dataBase.GetCollection<Company>("RestrictedCompanies");
-            var collection2 = _dataBase.GetCollection<Company>("DeletedCompanies");
+            try
+            {
+                var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
+                var collectioRestricted = _dataBase.GetCollection<Company>("RestrictedCompanies");
+                var collectionDeleted = _dataBase.GetCollection<Company>("DeletedCompanies");
 
-            var trash = collection.Find<Company>(x => x.Cnpj == cnpj).FirstOrDefault();
+                var trash = collection.FindOneAndDelete(c => c.Cnpj == cnpj);
+                if (trash == null)
+                {
+                    var trashRestricted = collectioRestricted.FindOneAndDelete(c => c.Cnpj == cnpj);
+                    if (trashRestricted == null)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        collectionDeleted.InsertOne(trashRestricted);
+                        return true;
+                    }
+                }
+                else
+                {
+                    collectionDeleted.InsertOne(trash);
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
-            collection2.InsertOne(trash);
+        public bool Restrict(string cnpj)
+        {
+            try
+            {
+                var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
+                var collectioRestricted = _dataBase.GetCollection<Company>("RestrictedCompanies");
 
-            collection.DeleteOne(x => x.Cnpj == cnpj);
+                var company = collection.FindOneAndDelete(c => c.Cnpj == cnpj);
+                if (company == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    collectioRestricted.InsertOne(company);
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool Unrestrict(string cnpj)
+        {
+            try
+            {
+                var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
+                var collectioRestricted = _dataBase.GetCollection<Company>("RestrictedCompanies");
+
+                var restricted = collectioRestricted.FindOneAndDelete(c => c.Cnpj == cnpj);
+                if (restricted == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    collection.InsertOne(restricted);
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool UndeleteCompany(string cnpj)
+        {
+            try
+            {
+                var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
+                var collectioDeleted = _dataBase.GetCollection<Company>("DeletedCompanies");
+
+                var deleted = collectioDeleted.FindOneAndDelete(c => c.Cnpj == cnpj);
+                if (deleted == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    collection.InsertOne(deleted);
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public void UpdateNameOPT(string cnpj, string nameOPT)
         {
-            var filter= Builders<Company>.Filter.Eq("Cnpj", cnpj);
-            var update= Builders<Company>.Update.Set("NameOPT", nameOPT);
+            var filter = Builders<Company>.Filter.Eq("Cnpj", cnpj);
+            var update = Builders<Company>.Update.Set("NameOPT", nameOPT);
 
             var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
             collection.UpdateOne(filter, update);
