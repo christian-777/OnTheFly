@@ -154,13 +154,10 @@ namespace OnTheFly.Connections
             }
         }
 
-        public void UpdateNameOPT(string cnpj, string nameOPT)
+        public bool Update(string cnpj, Company company)
         {
-            var filter = Builders<Company>.Filter.Eq("Cnpj", cnpj);
-            var update = Builders<Company>.Update.Set("NameOPT", nameOPT);
-
             var collection = _dataBase.GetCollection<Company>("ActivatedCompanies");
-            collection.UpdateOne(filter, update);
+            return collection.ReplaceOne(c=> c.Cnpj==cnpj, company).IsAcknowledged;
         }
 
         public void UpdateStatus(string cnpj, bool status)

@@ -207,71 +207,98 @@ namespace OnTheFly.CompanyService.Controllers
             return BadRequest("Companhia nao esta na lista de deletados");
         }
 
-
-        [HttpPut("/UpdateNameOPT/{cnpj},{nameOPT}", Name = "Atualização do Nome Fantasia")]
-        public async Task<ActionResult<string>> UpdateNameOPT(string cnpj, string nameOPT)
+        [HttpPut("/UpdateNameOPT/{CNPJ},{NameOPT}")]
+        public ActionResult UpdateName(string CNPJ, string NameOPT)
         {
-            if (_companyConnection.FindAll().Where(x => x.Cnpj == cnpj) == null)
-                return NotFound();
+            if (CNPJ == null || CNPJ.Equals("string") || CNPJ == "")
+                return BadRequest("CNPJ não informado!");
 
-            _companyConnection.UpdateNameOPT(cnpj, nameOPT);
+            CNPJ = CNPJ.Replace("%2F", "/");
 
-            return Accepted();
-        }
+            if (!CnpjValidation.Validate(CNPJ))
+                return BadRequest("CNPJ invalido");
 
-        [HttpPatch("/status/{cnpj},{status}", Name = "Atualização do Status")]
-        public async Task<ActionResult<string>> UpdateStatus(string cnpj, bool status)
-        {
-            if (_companyConnection.FindAll().Where(x => (x.Cnpj == cnpj) && (x.Status == false)).FirstOrDefault() is not null)
-                return BadRequest("Não é possível fazer UPDATE neste documento pois o status dele está inativo!");
-
-            _companyConnection.UpdateStatus(cnpj, status);
-
-            return Accepted();
-        }
-
-        [HttpDelete("/companyactivated{cnpj}")]
-        public async Task<ActionResult> DeleteCompany(string cnpj)
-        {
-            if (cnpj.Length != 14)
-                return BadRequest("CNPJ informado não possui o formato necessário para realizar a deleção da companhia! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
-
-            for (int i = 0; i < cnpj.Length; i++)
+            var company = _companyConnection.FindByCnpj(CNPJ);
+            if (company != null)
             {
-                if ((cnpj[i] != '0') && (cnpj[i] != '1') && (cnpj[i] != '2') && (cnpj[i] != '3') && (cnpj[i] != '4') && (cnpj[i] != '5') && (cnpj[i] != '6') && (cnpj[i] != '7') && (cnpj[i] != '8') && (cnpj[i] != '9'))
-                {
-                    return BadRequest("O CNPJ informado não possui apenas valores numéricos! Por favor, insira um valor de CNPJ que contenha 14 digitos numéricos (apenas números)");
-                }
+                company.NameOPT = NameOPT;
+                if (_companyConnection.Update(CNPJ, company))
+                    return Ok("NomeOPT do Companhia atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o nomeOPT da Companhia");
             }
 
-            if (_companyConnection.FindByCnpj(cnpj) == null)
-                return BadRequest("O CNPJ informado não foi encontrado!");
-
-            _companyConnection.Delete(cnpj);
-
-            return Ok();
+            return BadRequest("Companhia nao esta na lista");
         }
 
-        [HttpDelete("/companyrestricted/{cnpj}")]
-        public async Task<ActionResult> DeleteCompanyRestricted(string cnpj)
+        [HttpPut("/UpdateAddress/{CNPJ}")]
+        public ActionResult UpdateAddress(string CNPJ, Address address)
         {
-            if (cnpj.Length != 14)
-                return BadRequest("CNPJ informado não possui o formato necessário para realizar a deleção da companhia! Por favor, tente inserir novamente um número de CNPJ com 14 digitos numéricos (somente números)");
+            if (CNPJ == null || CNPJ.Equals("string") || CNPJ == "")
+                return BadRequest("CNPJ não informado!");
 
-            for (int i = 0; i < cnpj.Length; i++)
+            CNPJ = CNPJ.Replace("%2F", "/");
+
+            if (!CnpjValidation.Validate(CNPJ))
+                return BadRequest("CNPJ invalido");
+
+            address.Zipcode = address.Zipcode.Replace("-", "");
+
+            var auxAddress = _postOfficeService.GetAddress(address.Zipcode).Result;
+            if (auxAddress == null)
+                return NotFound("Endereço nao encontrado");
+
+            if (address.Number == 0)
+                return BadRequest("Campo Number é obrigatorio");
+
+            address.City = auxAddress.City;
+            address.Complement = auxAddress.Complement;
+            address.State = auxAddress.State;
+
+            if (auxAddress.Street != "")
+                address.Street = auxAddress.Street;
+            else
             {
-                if ((cnpj[i] != '0') && (cnpj[i] != '1') && (cnpj[i] != '2') && (cnpj[i] != '3') && (cnpj[i] != '4') && (cnpj[i] != '5') && (cnpj[i] != '6') && (cnpj[i] != '7') && (cnpj[i] != '8') && (cnpj[i] != '9'))
-                {
-                    return BadRequest("O CNPJ informado não possui apenas valores numéricos! Por favor, insira um valor de CNPJ que contenha 14 digitos numéricos (apenas números)");
-                }
+                if (address.Street == "" || address.Street.Equals("string") || address.Street == null)
+                    return BadRequest("O campo Street é obrigatorio");
             }
 
-            if (_companyConnection.FindByCnpjRestricted(cnpj) == null)
-                return BadRequest("O CNPJ informado não foi encontrado!");
+            var company = _companyConnection.FindByCnpj(CNPJ);
+            if (company != null)
+            {
+                company.Address = address;
+                if (_companyConnection.Update(CNPJ, company)!=null)
+                    return Ok("Endereço da Companhia atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o endereço da Companhia");
+            }
 
-            //_companyConnection.DeleteByRestricted(cnpj);
+            return BadRequest("Companhia nao esta na lista");
+        }
 
-            return Ok();
+        [HttpPut("/ChangeStatus/{CNPJ}")]
+        public ActionResult ChangeStatus(string CNPJ)
+        {
+            if (CNPJ == null || CNPJ.Equals("string") || CNPJ == "")
+                return BadRequest("CNPJ não informado!");
+
+            CNPJ = CNPJ.Replace("%2F", "/");
+
+            if (!CnpjValidation.Validate(CNPJ))
+                return BadRequest("CNPJ invalido");
+
+
+            var company = _companyConnection.FindByCnpj(CNPJ);
+            if (company != null)
+            {
+                company.Status = !company.Status;
+                if (_companyConnection.Update(CNPJ, company))
+                    return Ok("Status da Companhia atualizado com sucesso!");
+                else
+                    return BadRequest("erro ao atualizar o status da Companhia");
+            }
+
+            return BadRequest("companhia nao esta na lista");
         }
     }
 }

@@ -364,7 +364,7 @@ namespace OnTheFly.PassengerService.Controllers
                 if (_passengerConnection.Update(CPF, passenger))
                     return Ok("Endereço do Passageiro atualizado com sucesso!");
                 else
-                    return BadRequest("erro ao atualizar p endereço do Passageiro");
+                    return BadRequest("erro ao atualizar o endereço do Passageiro");
             }
 
             return BadRequest("passageiro nao esta na lista");
