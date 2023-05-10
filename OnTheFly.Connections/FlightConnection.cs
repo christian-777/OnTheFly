@@ -36,6 +36,12 @@ namespace OnTheFly.Connections
             return flight;
         }
 
+        public List<Flight> FindAll()
+        {
+            IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
+            return activeCollection.Find(f => true).ToList();
+        }
+
         public Flight? Get(string IATA, string RAB, BsonDateTime departure)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");

@@ -24,21 +24,30 @@ namespace OnTheFly.FlightService.Controllers
             _aircraft = aircraft;
         }
 
+        [HttpGet]
+        public ActionResult<List<Flight>> GetAll()
+        {
+            List<Flight> flights = _flight.FindAll();
+
+            if (flights.Count == 0)
+                return NotFound("Nenhum avião encontrado");
+
+            return flights;
+        }
+
         [HttpGet("{IATA},{RAB},{departure}")]
         public ActionResult<string> Get(string IATA, string RAB, string departure)
         {
-            var data= departure.Split('-');
+            var data = departure.Split('-');
             DateTime date;
             try
             {
-                date = DateTime.Parse(data[0] + "/" + data[1] + "/" + data[2] +" 09:00");
+                date = DateTime.Parse(data[0] + "/" + data[1] + "/" + data[2] + " 09:00");
             }
             catch
             {
                 return BadRequest("Data invalida");
             }
-            
-      
 
             BsonDateTime bsonDate = BsonDateTime.Create(date);
 
@@ -82,7 +91,7 @@ namespace OnTheFly.FlightService.Controllers
             aircraft.DtLastFlight = date;
             Flight? flightaux = _flight.Get(flightDTO.IATA, flightDTO.RAB, BsonDateTime.Create(date));
 
-            if (flightaux != null) 
+            if (flightaux != null)
                 return BadRequest("voo nao pode se repetir");
 
 
@@ -135,7 +144,7 @@ namespace OnTheFly.FlightService.Controllers
             return Ok("Voo atualizado com sucesso!");
         }
 
-        [HttpDelete("{IATA}, {RAB}, {departure}")]
+        [HttpPost("/SendToDeleted/{IATA}, {RAB}, {departure}")]
         public ActionResult Delete(string IATA, string RAB, string departure)
         {
             if (IATA == null || RAB == null || departure == null) return NoContent();
@@ -148,7 +157,7 @@ namespace OnTheFly.FlightService.Controllers
 
             BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
 
-            if (!_flight.Delete(IATA, RAB, departureDT)) 
+            if (!_flight.Delete(IATA, RAB, departureDT))
                 return BadRequest("Não foi possível deletar o voo");
 
             return Ok("Voo deletado com sucesso!");

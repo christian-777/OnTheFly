@@ -86,9 +86,8 @@ namespace OnTheFly.SaleService.Controllers
                 return BadRequest("Data invalida");
             }
 
-            Flight? flight1 = new FlightService().GetFlight(saleDTO.IATA, rab, saleDTO.Departure).Result;
             Flight? flight = _flight.Get(saleDTO.IATA, rab, BsonDateTime.Create(date));
-            if (flight == null) return NotFound();
+            if (flight == null) return NotFound("Voo não encontrado");
 
             List<string> passengers = new List<string>();
 
@@ -192,7 +191,7 @@ namespace OnTheFly.SaleService.Controllers
                 return BadRequest("Falha ao atualizar status");
         }
 
-        [HttpDelete("/delete/{CPF},{IATA},{RAB},{departure}")]
+        [HttpPost("/SendToDeleted/{CPF},{IATA},{RAB},{departure}")]
         public ActionResult Delete(string CPF, string IATA, string RAB, string departure)
         {
             var data = departure.Split('-');

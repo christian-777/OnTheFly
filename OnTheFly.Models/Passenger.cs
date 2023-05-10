@@ -27,6 +27,8 @@ namespace OnTheFly.Models
 
         public static bool ValidateCPF(string cpf)
         {
+            if (cpf.Length != 11) return false;
+
             if (!long.TryParse(cpf, out var aux))
                 return false;
 
