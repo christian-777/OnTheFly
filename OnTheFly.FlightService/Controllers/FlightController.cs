@@ -5,6 +5,7 @@ using OnTheFly.Connections;
 using OnTheFly.FlightService.Services;
 using OnTheFly.Models;
 using OnTheFly.Models.DTO;
+using ThirdParty.Json.LitJson;
 
 namespace OnTheFly.FlightService.Controllers
 {
@@ -52,30 +53,42 @@ namespace OnTheFly.FlightService.Controllers
         public ActionResult Insert(FlightDTO flightDTO)
         {
             if (flightDTO == null) return NoContent();
-
+            DateTime date;
+            try
+            {
+                date = DateTime.Parse(flightDTO.Departure.Year + "/" + flightDTO.Departure.Month + "/" + flightDTO.Departure.Day + " 09:00");
+            }
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
             // Verificar se airport existe e é válido
-            Airport? airport = _airport.GetValidDestiny(flightDTO.Destiny.IATA).Result;
+            Airport? airport = _airport.GetValidDestiny(flightDTO.IATA).Result;
             if (airport == null) return NotFound();
             if (airport.Country != "BR") return Unauthorized();
 
-            flightDTO.Destiny = airport;
-
             // Verificar se aircraft existe e é válido
-            AirCraft? aircraft = _aircraft.GetAircraft(flightDTO.Plane.RAB).Result;
+            AirCraft? aircraft = _aircraft.GetAircraft(flightDTO.RAB).Result;
             if (aircraft == null) return NotFound();
             if (aircraft.Company == null) return NotFound();
-            if (aircraft.Company.Status == false || aircraft.Company.Status == null) return Unauthorized();
+            if (aircraft.Company.Status == false) return Unauthorized();
 
             // Verificação se data de voo é depois do último voo do aircraft
-            if (aircraft.DtLastFlight != null && aircraft.DtLastFlight > flightDTO.Departure)
+            if (aircraft.DtLastFlight != null && aircraft.DtLastFlight > date)
                 return BadRequest("Data de voo não pode ser antes do último voo do avião");
 
             // Atualizar data de último voo de aircraft para a data do voo
-            aircraft.DtLastFlight = flightDTO.Departure;
-            if (_aircraft.UpdateAircraft(aircraft.RAB, flightDTO.Departure) == null) return BadRequest("Impossível atualizar última data de voo do avião");
+            aircraft.DtLastFlight = date;
+            Flight? flightaux = _flight.Get(flightDTO.IATA, flightDTO.RAB, BsonDateTime.Create(date));
+
+            if (flightaux != null) 
+                return BadRequest("voo nao pode se repetir");
+
+
+            if (_aircraft.UpdateAircraft(aircraft.RAB, date) == null) return BadRequest("Impossível atualizar última data de voo do avião");
 
             // Inserção de flight
-            Flight? flight = _flight.Insert(flightDTO, aircraft, airport);
+            Flight? flight = _flight.Insert(flightDTO, aircraft, airport, date);
 
             if (flight == null) return BadRequest();
             return Ok();

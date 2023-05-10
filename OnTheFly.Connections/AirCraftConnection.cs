@@ -30,6 +30,7 @@ namespace OnTheFly.Connections
         public AirCraft FindByRAB(string RAB)
         {
             var collection = _database.GetCollection<AirCraft>("ActivatedAirCrafts");
+            var t= collection.Find(a => a.RAB == RAB).FirstOrDefault();
             return collection.Find(a => a.RAB == RAB).FirstOrDefault();
         }
 
