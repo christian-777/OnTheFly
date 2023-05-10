@@ -11,14 +11,17 @@ namespace OnTheFly.SaleService.Services
     {
         private HttpClient _httpClient = new HttpClient();
 
-        public async Task<Flight> GetFlight(string IATA, string RAB, DateTime departure)
+        public async Task<Flight> GetFlight(string IATA, string RAB, DateDTO departure)
         {
             try
             {
-
-                BsonDateTime bsonDate = BsonDateTime.Create(departure);
-
-                HttpResponseMessage res = await _httpClient.PostAsJsonAsync("https://localhost:5003/api/Flight/GetFlight/" + IATA + ", " + RAB,  bsonDate);
+                SaleDTO sale = new SaleDTO()
+                {
+                    IATA = IATA,
+                    RAB= RAB,
+                    Departure= departure
+                };
+                HttpResponseMessage res = await _httpClient.PostAsJsonAsync("https://localhost:5003/api/Flight/","ad");
                 if (!res.IsSuccessStatusCode) return null;
 
                 string content = await res.Content.ReadAsStringAsync();

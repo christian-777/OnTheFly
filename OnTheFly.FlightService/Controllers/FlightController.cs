@@ -24,8 +24,8 @@ namespace OnTheFly.FlightService.Controllers
             _aircraft = aircraft;
         }
 
-        [HttpPost("/Get/{IATA}, {RAB}")]
-        public ActionResult<string> Get(string IATA, string RAB,DateDTO departure)
+        [HttpPost("/GetFlight/{IATA},{RAB}")]
+        public ActionResult<string> Get(string IATA, string RAB, DateDTO departure)
         {
             DateTime date;
             try

@@ -3,6 +3,7 @@ using System.Text;
 using System.Xml;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using OnTheFly.Connections;
 using OnTheFly.Models;
@@ -17,16 +18,14 @@ namespace OnTheFly.SaleService.Controllers
     public class SalesController : ControllerBase
     {
         private readonly SaleConnection _saleConnection;
-        private readonly FlightService _flight;
+        private readonly FlightConnection _flight;
         private readonly PassengerService _passenger;
-        private readonly FlightConnection _flightService;
         private readonly ConnectionFactory _factory;
-        public SalesController(SaleConnection saleConnection, FlightService flight, PassengerService passenger, ConnectionFactory factory, FlightConnection flightconn)
+        public SalesController(SaleConnection saleConnection, FlightConnection flight, PassengerService passenger, ConnectionFactory factory)
         {
             _saleConnection = saleConnection;
             _flight = flight;
             _passenger = passenger;
-            _flightService = flightconn;
             _factory = factory;
         }
 
@@ -53,22 +52,39 @@ namespace OnTheFly.SaleService.Controllers
         [HttpPost]
         public ActionResult Insert(SaleDTO saleDTO)
         {
-            /*if (saleDTO.Reserved == saleDTO.Sold)
+            if (saleDTO.Reserved == saleDTO.Sold)
                 return BadRequest("Status de venda ou agendamento invalido");
 
-            Flight? flight = _flightService.Get(saleDTO.IATA, saleDTO.RAB, saleDTO.Departure);
+            string rab = saleDTO.RAB.Replace("-", "");
+            if (rab.Length != 5)
+                return BadRequest("Quantidade de caracteres de RAB inválida");
+
+            if (!AirCraft.RABValidation(rab))
+                return BadRequest("RAB inválido");
+
+            DateTime date;
+            try
+            {
+                date = DateTime.Parse(saleDTO.Departure.Year + "/" + saleDTO.Departure.Month + "/" + saleDTO.Departure.Day+" 09:00");
+            }
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
+
+            Flight? flight = _flight.Get(saleDTO.IATA, rab, BsonDateTime.Create(date));
             if (flight == null) return NotFound();
 
-            List<Passenger> passengers = new List<Passenger>();
+            List<string> passengers = new List<string>();
             foreach (string cpf in saleDTO.Passengers)
             {
                 Passenger? passenger = _passenger.GetPassenger(cpf).Result;
                 if (passenger == null) return NotFound();
                 if (!passenger.Status) return BadRequest("Existem passageiros impedidos de comprar");
-                passengers.Add(passenger);
+                passengers.Add(passenger.CPF);
             }
          
-            if (passengers[0].ValidateAge())
+            if (Passenger.ValidateAge(_passenger.GetPassenger(passengers[0]).Result))
                 return BadRequest("Menores nao sao permitidos comprar passagens");
 
             foreach (var passenger in passengers)
@@ -79,10 +95,10 @@ namespace OnTheFly.SaleService.Controllers
             }
 
             if (passengers.Count + flight.Sales > flight.Plane.Capacity)
-                return BadRequest("A quantidade de passagens excede a capacidade do avião"); 
+                return BadRequest("A quantidade de passagens excede a capacidade do avião");
 
-            if (_flight.PatchFlight(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count) == null)
-                return BadRequest("nao foi possivel atualizar o voo");
+            _flight.PatchSalesNumber(flight.Destiny.IATA, flight.Plane.RAB, flight.Departure, passengers.Count);
+               
 
             Sale sale = new Sale
             {
@@ -133,11 +149,8 @@ namespace OnTheFly.SaleService.Controllers
                         body: bytesMessage
                         );
                 }
-            }*/
+            }
             return Accepted();
-
-            //_saleConnection.Insert(sale);
-            return Ok();
         }
 
         [HttpPatch("/sell/{CPF},{IATA},{RAB},{departure}")]

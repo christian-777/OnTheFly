@@ -22,35 +22,35 @@ namespace OnTheFly.Connections
         {
             try
             {
-                var collection = Database.GetCollection<Sale>("ActiveSale");
+                var collection = Database.GetCollection<Sale>("ActivateSale");
                 collection.InsertOne(sale);
                 return sale;
             }
             catch(Exception ex)
             {
-                throw ex;
+                throw;
             }
         }
         
         public Sale FindSale(string cpf, string iata, string rab, DateTime departure)
         {
-            var collection = Database.GetCollection<Sale>("ActiveSale");
-            return collection.Find(s=> (s.Flight.Departure==departure) && (s.Flight.Plane.RAB==rab) && (s.Flight.Destiny.IATA==iata) && (s.Passengers.FindAll(p=> p.CPF == cpf)[0].CPF==cpf)).FirstOrDefault();
+            var collection = Database.GetCollection<Sale>("ActivateSale");
+            return collection.Find(s=> (s.Flight.Departure==departure) && (s.Flight.Plane.RAB==rab) && (s.Flight.Destiny.IATA==iata) && (s.Passengers.FindAll(p => p == cpf)[0] ==cpf)).FirstOrDefault();
 
         }
         
 
         public List<Sale> FindAll()
         {
-            var collection = Database.GetCollection<Sale>("ActiveSale");
+            var collection = Database.GetCollection<Sale>("ActivateSale");
             return collection.Find(s => true).ToList();
         }
 
         
         public bool Update(string cpf, string iata, string rab, DateTime departure, Sale sale)
         {
-            var collection = Database.GetCollection<Sale>("ActiveSale");
-            if (collection.ReplaceOne(s => (s.Flight.Departure == departure) && (s.Flight.Plane.RAB == rab) && (s.Flight.Destiny.IATA == iata) && (s.Passengers.FindAll(p => p.CPF == cpf)[0].CPF == cpf), sale).IsModifiedCountAvailable)
+            var collection = Database.GetCollection<Sale>("ActivateSale");
+            if (collection.ReplaceOne(s => (s.Flight.Departure == departure) && (s.Flight.Plane.RAB == rab) && (s.Flight.Destiny.IATA == iata) && (s.Passengers.FindAll(p => p == cpf)[0] == cpf), sale).IsModifiedCountAvailable)
                 return true;
             else
                 return false;
@@ -61,10 +61,10 @@ namespace OnTheFly.Connections
             bool status = false;
             try
             {
-                var collection = Database.GetCollection<Sale>("ActiveSale");
+                var collection = Database.GetCollection<Sale>("ActivateSale");
                 var collectionofdelete = Database.GetCollection<Sale>("DeletedSale");
 
-                var deletesale= collection.FindOneAndDelete(s => (s.Flight.Departure == departure) && (s.Flight.Plane.RAB == rab) && (s.Flight.Destiny.IATA == iata) && (s.Passengers.FindAll(p => p.CPF == cpf)[0].CPF == cpf));
+                var deletesale= collection.FindOneAndDelete(s => (s.Flight.Departure == departure) && (s.Flight.Plane.RAB == rab) && (s.Flight.Destiny.IATA == iata) && (s.Passengers.FindAll(p => p == cpf)[0] == cpf));
                 collectionofdelete.InsertOne(deletesale);
                 
                 status = true;
