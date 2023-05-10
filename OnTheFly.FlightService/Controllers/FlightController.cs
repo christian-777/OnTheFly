@@ -52,7 +52,7 @@ namespace OnTheFly.FlightService.Controllers
         [HttpPost]
         public ActionResult Insert(FlightDTO flightDTO)
         {
-            if (flightDTO == null) return NoContent();
+            if (flightDTO == null) return BadRequest("Nenhum voo inserido");
             DateTime date;
             try
             {

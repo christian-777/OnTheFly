@@ -68,7 +68,7 @@ namespace OnTheFly.PassengerService.Controllers
                 return BadRequest("Impossivel inserir este passageiro");
 
             if (_passengerConnection.FindPassenger(passengerdto.CPF) != null)
-                return Conflict("Pasageiro ja cadastrado");
+                return Conflict("Passageiro ja cadastrado");
 
             DateTime date;
             try
@@ -194,7 +194,7 @@ namespace OnTheFly.PassengerService.Controllers
         }
 
         [HttpPost("/UndeletPassenger/{CPF}")]
-        public ActionResult UndeletPassenger(string CPF)
+        public ActionResult UndeletePassenger(string CPF)
         {
             if (CPF == null || CPF.Equals("string") || CPF == "")
                 return BadRequest("CPF não informado!");

@@ -41,12 +41,24 @@ namespace OnTheFly.SaleService.Controllers
         }
 
         [HttpGet("/getsale/{CPF},{IATA},{RAB},{departure}")]
-        public ActionResult<string> GetSale(string CPF, string IATA, string RAB, DateTime departure)
+        public ActionResult<string> GetSale(string CPF, string IATA, string RAB, string departure)
         {
-            var sales = _saleConnection.FindSale(CPF, IATA, RAB, departure);
-            if (sales == null)
-                return NoContent();
-            return JsonConvert.SerializeObject(sales, Newtonsoft.Json.Formatting.Indented);
+            var data = departure.Split('-');
+            DateTime date;
+            try
+            {
+                date = DateTime.Parse(data[0] + "/" + data[1] + "/" + data[2] + " 09:00");
+            }
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
+
+            Sale? sale = _saleConnection.FindSale(CPF, IATA, RAB, date);
+            if (sale == null)
+                return NotFound("Venda não encontrada");
+
+            return JsonConvert.SerializeObject(sale, Newtonsoft.Json.Formatting.Indented);
         }
 
         [HttpPost]
@@ -151,30 +163,51 @@ namespace OnTheFly.SaleService.Controllers
                         );
                 }
             }
-            return Accepted();
+            return Ok("Venda enviada ao banco com sucesso");
         }
 
-        [HttpPatch("/sell/{CPF},{IATA},{RAB},{departure}")]
-        public ActionResult PatchSaleStatus(string CPF, string IATA, string RAB, DateTime departure)
+        [HttpPut("/UpdateSale/{CPF},{IATA},{RAB},{departure}")]
+        public ActionResult UpdateSale(string CPF, string IATA, string RAB, string departure)
         {
-            var sale = _saleConnection.FindSale(CPF, IATA, RAB, departure);
-            if (sale == null) return NotFound();
-            if (sale.Reserved)
+            var data = departure.Split('-');
+            DateTime date;
+            try
             {
-                sale.Reserved=!sale.Reserved;
-                sale.Sold=!sale.Sold;
+                date = DateTime.Parse(data[0] + "/" + data[1] + "/" + data[2] + " 09:00");
             }
-            if (_saleConnection.Update(CPF, IATA, RAB, departure, sale))
-                return Ok();
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
+
+            Sale? sale = _saleConnection.FindSale(CPF, IATA, RAB, date);
+            if (sale == null) return NotFound("Venda não encontrada");
+
+            if (_saleConnection.Update(CPF, IATA, RAB, date, sale))
+                return Ok("Status atualizado com sucesso");
             else
                 return BadRequest("Falha ao atualizar status");
         }
 
         [HttpDelete("/delete/{CPF},{IATA},{RAB},{departure}")]
-        public ActionResult Delete(string CPF, string IATA, string RAB, DateTime departure)
+        public ActionResult Delete(string CPF, string IATA, string RAB, string departure)
         {
-            _saleConnection.Delete(CPF, IATA, RAB, departure);
-            return Ok(); ;
+            var data = departure.Split('-');
+            DateTime date;
+            try
+            {
+                date = DateTime.Parse(data[0] + "/" + data[1] + "/" + data[2] + " 9:00");
+            }
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
+
+            Sale? sale = _saleConnection.FindSale(CPF, IATA, RAB, date);
+            if (sale == null) return NotFound("Venda não encontrada");
+
+            _saleConnection.Delete(CPF, IATA, RAB, date);
+            return Ok("Deletado com sucesso"); ;
         }
     }
 }
