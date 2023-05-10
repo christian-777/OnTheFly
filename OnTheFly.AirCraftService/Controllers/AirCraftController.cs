@@ -16,65 +16,90 @@ namespace OnTheFly.AirCraftService.Controllers
     [ApiController]
     public class AirCraftController : ControllerBase
     {
-        private AirCraftConnection _airCraftConnection = new AirCraftConnection();
+        private AirCraftConnection _airCraftConnection;
+        private CompanyService _companyService;
+
+        public AirCraftController(AirCraftConnection aircraftConnection, CompanyService companyService)
+        {
+            _airCraftConnection = aircraftConnection;
+            _companyService = companyService;
+        }
 
         [HttpGet]
-        public async Task<ActionResult<string>> GetAirCraft()
+        public async Task<ActionResult<List<AirCraft>>> GetAirCraft()
         {
-            var aircrafts = _airCraftConnection.FindAll();
-            if (aircrafts == null)
-                return NoContent();
-            return JsonConvert.SerializeObject(aircrafts, Formatting.Indented);
+            if (_airCraftConnection.FindAll().Count == 0)
+            {
+                return NotFound("Nenhuma companhia cadastrada");
+            }
+            return _airCraftConnection.FindAll();
         }
+
         [HttpGet("{RAB}")]
-        public async Task<ActionResult<string>> GetAirCraft(string RAB)
+        public async Task<ActionResult<AirCraft>> GetAirCraftByRAB(string RAB)
         {
-            var aircraft = _airCraftConnection.FindOne(RAB);
-            if (aircraft == null)
-                return NotFound();
-            return JsonConvert.SerializeObject(aircraft, Formatting.Indented);
+            return _airCraftConnection.FindByRAB(RAB);
         }
 
         [HttpPost]
         public async Task<ActionResult<string>> PostAirCraft(AirCraftDTO airCraftDTO)
         {
-            var company = await CompanyService.GetCompany(airCraftDTO.Company);
-            if (company == null)
-                return BadRequest();
+            #region company
+            Company? company = await _companyService.GetCompany(airCraftDTO.Company);
+            if (company == null) return NotFound("Companhia não encontrada");
+            #endregion
 
-            var rab = airCraftDTO.RAB.Replace("-", "");
+            #region rab
+            string rab = airCraftDTO.RAB.Replace("-", "");
             if (rab.Length != 5)
-                return BadRequest();
+                return BadRequest("Quantidade de caracteres de RAB inválida");
 
             if (!AirCraft.RABValidation(rab))
-                return BadRequest("invalid RAB");
+                return BadRequest("RAB inválido");
+            #endregion
 
-            if (airCraftDTO.DtLastFlight != null)
+            #region date
+            DateTime dateRegistry;
+            try
             {
-                DateTime last = airCraftDTO.DtLastFlight.Value;
-                if (airCraftDTO.DtRegistry.Subtract(last).TotalDays > 0 )
-                    return BadRequest();
+                dateRegistry = DateTime.Parse(airCraftDTO.DtRegistry.Year + "/" + airCraftDTO.DtRegistry.Month + "/" + airCraftDTO.DtRegistry.Day);
             }
+            catch
+            {
+                return BadRequest("A data informada é inválida! Por favor, informe uma data de registro de avião válida");
+            }
+
+            DateTime? dateLastFlight;
+            if (airCraftDTO.DtLastFlight == null) dateLastFlight = null;
+            else
+            {
+                try
+                {
+                    dateLastFlight = DateTime.Parse(airCraftDTO.DtLastFlight.Year + "/" + airCraftDTO.DtLastFlight.Month + "/" + airCraftDTO.DtLastFlight.Day);
+                }
+                catch
+                {
+                    return BadRequest("A data informada é inválida! Por favor, informe uma data de último voo de avião válida");
+                }
+                DateTime last = dateLastFlight.Value;
+                if (dateRegistry.Subtract(last).TotalDays > 0)
+                    return BadRequest("O último voo não pode ser antes da data de registro do avião");
+            }
+            #endregion
 
             AirCraft airCraft = new AirCraft()
             {
                 Capacity = airCraftDTO.Capacity,
                 Company = company,
-                DtLastFlight= airCraftDTO.DtLastFlight,
-                DtRegistry= airCraftDTO.DtRegistry,
-                RAB=airCraftDTO.RAB
-                
+                DtLastFlight = dateLastFlight,
+                DtRegistry = dateRegistry,
+                RAB = airCraftDTO.RAB
             };
-            
-            try
-            {
-                var inserted = _airCraftConnection.Insert(airCraft);
-                return JsonConvert.SerializeObject(inserted, Formatting.Indented);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
+            var insertAircraft = _airCraftConnection.Insert(airCraft);
+            if (insertAircraft != null)
+                return Created("", "Inserido com sucesso!\n\n" + JsonConvert.SerializeObject(insertAircraft, Formatting.Indented));
+            return BadRequest("Erro ao inserir avião!");
         }
 
         [HttpPut("{RAB}")]
@@ -104,7 +129,7 @@ namespace OnTheFly.AirCraftService.Controllers
         [HttpDelete("{RAB}")]
         public async Task<ActionResult> DeleteAirCraft(string RAB)
         {
-            if(_airCraftConnection.Delete(RAB) ==null)
+            if (_airCraftConnection.Delete(RAB) == null)
                 return NotFound();
             return Ok();
 

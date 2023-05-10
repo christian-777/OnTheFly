@@ -6,37 +6,37 @@ namespace OnTheFly.Connections
 {
     public class AirCraftConnection
     {
-        public IMongoDatabase Database { get; private set; }
+        private readonly IMongoDatabase _database;
         public AirCraftConnection()
         {
             var client = new MongoClient("mongodb://localhost:27017");
-            Database = client.GetDatabase("AirCraft");
+            _database = client.GetDatabase("AirCraft");
         }
 
         public AirCraft Insert(AirCraft airCraft)
         {
-            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
+            var collection = _database.GetCollection<AirCraft>("ActivatedAirCraft");
             collection.InsertOne(airCraft);
-
-            return collection.Find(a => a.RAB == airCraft.RAB).First();
+            var res = collection.Find(a => a.RAB == airCraft.RAB).FirstOrDefault();
+            return res;
         }
 
-        public List<AirCraft>? FindAll()
+        public List<AirCraft> FindAll()
         {
-            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
+            var collection = _database.GetCollection<AirCraft>("ActivatedAirCraft");
             return collection.Find<AirCraft>(a => true).ToList();
         }
 
-        public AirCraft? FindOne(string rab)
+        public AirCraft FindByRAB(string RAB)
         {
-            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
-            return collection.Find<AirCraft>(a => a.RAB == rab).First();
+            var collection = _database.GetCollection<AirCraft>("ActivatedAirCraft");
+            return collection.Find(a => a.RAB == RAB).FirstOrDefault();
         }
 
         public AirCraft Delete(string rab)
         {
-            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
-            var collection2 = Database.GetCollection<AirCraft>("InactiveAirCraft");
+            var collection = _database.GetCollection<AirCraft>("ActivatedAirCraft");
+            var collection2 = _database.GetCollection<AirCraft>("DeletedAirCraft");
 
             var filter = Builders<AirCraft>.Filter.Eq("RAB", rab);
 
@@ -48,14 +48,14 @@ namespace OnTheFly.Connections
 
         public AirCraft? Update(string rab, AirCraft airCraft)
         {
-            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
+            var collection = _database.GetCollection<AirCraft>("ActivatedAirCraft");
             collection.ReplaceOne(a => a.RAB == rab, airCraft);
             return collection.Find(a => a.RAB == airCraft.RAB).First();
         }
 
         public AirCraft? PatchDate(string rab, DateTime date)
         {
-            var collection = Database.GetCollection<AirCraft>("ActiveAirCraft");
+            var collection = _database.GetCollection<AirCraft>("ActivatedAirCraft");
             AirCraft? airCraft = collection.Find(a => a.RAB == rab).FirstOrDefault();
             if (airCraft == null) return null;
 

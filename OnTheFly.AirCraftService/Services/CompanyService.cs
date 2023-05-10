@@ -6,13 +6,13 @@ namespace OnTheFly.AirCraftService.Services
 {
     public class CompanyService
     {
-        static readonly HttpClient client = new HttpClient();
-        public static async Task<Company> GetCompany(string cnpj)
+        private readonly HttpClient client = new HttpClient();
+        public async Task<Company> GetCompany(string cnpj)
         {
             try
             {
                 //falta colocar a porta do microserviço de company
-                HttpResponseMessage response = await CompanyService.client.GetAsync("https://localhost:5001/api/Companies/" + cnpj);
+                HttpResponseMessage response = await client.GetAsync("https://localhost:5001/api/Companies/" + cnpj);
                 response.EnsureSuccessStatusCode();
                 string ender = await response.Content.ReadAsStringAsync();
                 var company = JsonConvert.DeserializeObject<Company>(ender);
@@ -24,12 +24,12 @@ namespace OnTheFly.AirCraftService.Services
             }
         }
 
-        internal static async Task<Company> PutCompany(Company comp)
+        public async Task<Company> PutCompany(Company comp)
         {
             try
             {
                 //falta colocar a porta do microserviço de company
-                HttpResponseMessage response = await CompanyService.client.PutAsJsonAsync("", comp);
+                HttpResponseMessage response = await client.PutAsJsonAsync("", comp);
                 response.EnsureSuccessStatusCode();
                 string ender = await response.Content.ReadAsStringAsync();
                 var company = JsonConvert.DeserializeObject<Company>(ender);
