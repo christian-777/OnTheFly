@@ -24,20 +24,20 @@ namespace OnTheFly.FlightService.Controllers
             _aircraft = aircraft;
         }
 
-        [HttpPost("/GetFlight/{IATA},{RAB}")]
-        public ActionResult<string> Get(string IATA, string RAB, DateDTO departure)
+        [HttpGet("{IATA},{RAB},{departure}")]
+        public ActionResult<string> Get(string IATA, string RAB, string departure)
         {
+            var data= departure.Split('-');
             DateTime date;
             try
             {
-                date = DateTime.Parse(departure.Year + "/" + departure.Month + "/" + departure.Day +" 09:00");
+                date = DateTime.Parse(data[0] + "/" + data[1] + "/" + data[2] +" 09:00");
             }
             catch
             {
                 return BadRequest("Data invalida");
             }
-            if (DateTime.Now.Subtract(date).TotalDays < 0)
-                return BadRequest("Data invalida");
+            
       
 
             BsonDateTime bsonDate = BsonDateTime.Create(date);

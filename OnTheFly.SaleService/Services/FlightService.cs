@@ -15,13 +15,8 @@ namespace OnTheFly.SaleService.Services
         {
             try
             {
-                SaleDTO sale = new SaleDTO()
-                {
-                    IATA = IATA,
-                    RAB= RAB,
-                    Departure= departure
-                };
-                HttpResponseMessage res = await _httpClient.PostAsJsonAsync("https://localhost:5003/api/Flight/","ad");
+                string date=departure.Year+"-"+departure.Month+"-"+departure.Day;
+                HttpResponseMessage res = await _httpClient.GetAsync("https://localhost:5003/api/Flight/"+IATA+","+ RAB+","+ date);
                 if (!res.IsSuccessStatusCode) return null;
 
                 string content = await res.Content.ReadAsStringAsync();

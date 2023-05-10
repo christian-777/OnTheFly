@@ -72,6 +72,7 @@ namespace OnTheFly.SaleService.Controllers
                 return BadRequest("Data invalida");
             }
 
+            Flight? flight1 = new FlightService().GetFlight(saleDTO.IATA, rab, saleDTO.Departure).Result;
             Flight? flight = _flight.Get(saleDTO.IATA, rab, BsonDateTime.Create(date));
             if (flight == null) return NotFound();
 
