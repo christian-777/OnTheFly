@@ -69,9 +69,9 @@ namespace OnTheFly.Connections
 
             if (flight == null) return false;
 
-            bool status = (flight.Status == true) ? false : true;
+            if (flight.Status == false) return false;
 
-            var update = Builders<Flight>.Update.Set("Status", status);
+            var update = Builders<Flight>.Update.Set("Status", false);
 
             return activeCollection.UpdateOne(filter, update).IsAcknowledged;
         }
