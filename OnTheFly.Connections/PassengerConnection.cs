@@ -21,15 +21,20 @@ namespace OnTheFly.Connections
         }
         public Passenger Insert(Passenger passenger)
         {
-            var collection = Database.GetCollection<Passenger>("ActivePassenger");
+            var collection = Database.GetCollection<Passenger>("ActivePassenger");          
+
             collection.InsertOne(passenger);
             return passenger;
         }
         public Passenger FindPassenger(string cpf)
         {
             var collection = Database.GetCollection<Passenger>("ActivePassenger");
-            return collection.Find(c => c.CPF == cpf).FirstOrDefault();
-
+            return collection.Find(p => p.CPF == cpf).FirstOrDefault();
+        }
+        public Passenger FindPassengerRestrict(string cpf)
+        {
+            var collection = Database.GetCollection<Passenger>("RestrictPassenger");
+            return collection.Find(p => p.CPF == cpf).FirstOrDefault();
         }
         public List<Passenger> FindAll()
         {
@@ -49,8 +54,10 @@ namespace OnTheFly.Connections
             {
                 var collection = Database.GetCollection<Passenger>("ActivePassenger");
                 var collectionofdelete = Database.GetCollection<Passenger>("InactivePassenger");
+                var collectionofrestrict = Database.GetCollection<Passenger>("RestrictPassenger");
 
                 var trash = collection.FindOneAndDelete(p => p.CPF == cpf);
+                var restrict = collectionofrestrict.FindOneAndDelete(p => p.CPF == cpf);
 
                 collectionofdelete.InsertOne(trash);
 
@@ -61,6 +68,33 @@ namespace OnTheFly.Connections
                 status = false;
             }
             return status;
+        }
+        public bool Restrict(string cpf)
+        {
+            bool status = false;
+            try
+            {
+                var collection = Database.GetCollection<Passenger>("ActivePassenger");
+                var collectionofrestrict = Database.GetCollection<Passenger>("RestrictPassenger");
+
+                var restrict = collection.FindOneAndDelete(p => p.CPF == cpf);
+
+                collectionofrestrict.InsertOne(restrict);
+
+                status = true;
+
+            }
+            catch
+            {
+                status = false;
+            }
+            return status;
+        }
+        public bool DeleteFull(string cpf)
+        {
+            var collectionofdelete = Database.GetCollection<Passenger>("RestrictPassenger");
+            collectionofdelete.FindOneAndDelete(p => p.CPF == cpf);
+            return false;
         }
     }
 }
