@@ -18,7 +18,7 @@ namespace OnTheFly.SaleService.Services
 
                 BsonDateTime bsonDate = BsonDateTime.Create(departure);
 
-                HttpResponseMessage res = await _httpClient.GetAsync("https://localhost:5003/api/Flight/" + IATA + ", " + RAB + ", " + bsonDate);
+                HttpResponseMessage res = await _httpClient.PostAsJsonAsync("https://localhost:5003/api/Flight/GetFlight/" + IATA + ", " + RAB,  bsonDate);
                 if (!res.IsSuccessStatusCode) return null;
 
                 string content = await res.Content.ReadAsStringAsync();

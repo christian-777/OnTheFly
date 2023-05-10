@@ -39,7 +39,8 @@ namespace OnTheFly.Connections
         public Flight? Get(string IATA, string RAB, BsonDateTime departure)
         {
             IMongoCollection<Flight> activeCollection = Database.GetCollection<Flight>("ActivatedFlight");
-            return activeCollection.Find(f => f.Destiny.IATA == IATA && f.Plane.RAB == RAB && f.Departure == departure).FirstOrDefault();
+            var filter = Builders<Flight>.Filter.Eq("Destiny.iata", IATA) & Builders<Flight>.Filter.Eq("Plane.RAB", RAB) & Builders<Flight>.Filter.Eq("Departure", departure);
+            return activeCollection.Find(filter).FirstOrDefault();
         }
 
         public void PatchSalesNumber(string IATA, string RAB, BsonDateTime departure, int salesNumber)

@@ -23,16 +23,23 @@ namespace OnTheFly.FlightService.Controllers
             _aircraft = aircraft;
         }
 
-        [HttpGet("{IATA}, {RAB}, {departure}")]
-        public ActionResult<string> Get(string IATA, string RAB, string departure)
+        [HttpPost("/Get/{IATA}, {RAB}")]
+        public ActionResult<string> Get(string IATA, string RAB,DateDTO departure)
         {
-            bool isDate = DateTime.TryParse(departure, out DateTime departureDT);
-            if (!isDate) return BadRequest("Formato de data não reconhecido");
+            DateTime date;
+            try
+            {
+                date = DateTime.Parse(departure.Year + "/" + departure.Month + "/" + departure.Day +" 09:00");
+            }
+            catch
+            {
+                return BadRequest("Data invalida");
+            }
+            if (DateTime.Now.Subtract(date).TotalDays < 0)
+                return BadRequest("Data invalida");
+      
 
-            BsonDateTime bsonDate = BsonDateTime.Create(departureDT);
-
-            DateTime dateTime = DateTime.Parse(departure);
-            if (IATA == null || RAB == null || departure == null) return NoContent();
+            BsonDateTime bsonDate = BsonDateTime.Create(date);
 
             Flight? flight = _flight.Get(IATA, RAB, bsonDate);
 
