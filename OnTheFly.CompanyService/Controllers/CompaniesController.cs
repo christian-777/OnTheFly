@@ -36,9 +36,9 @@ namespace OnTheFly.CompanyService.Controllers
         }
 
         [HttpGet("{cnpj}")]
-        public async Task<ActionResult<Company>> GetCompanyByCNPJ( string cnpj)
+        public async Task<ActionResult<Company>> GetCompanyByCNPJ(string cnpj)
         {
-            cnpj = cnpj.Replace("%2F", "/");
+            cnpj = cnpj.Replace("%2F", "").Replace(".", "").Replace("-", "").Replace("/", "");
             if (!CnpjValidation.Validate(cnpj))
                 return BadRequest("Cnpj Invalido");
 
@@ -51,8 +51,9 @@ namespace OnTheFly.CompanyService.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> PostCompany(CompanyDTO companyDTO)
         {
-
             #region Company
+            companyDTO.Cnpj = companyDTO.Cnpj.Replace("%2F", "").Replace(".", "").Replace("-", "").Replace("/", "");
+            if (companyDTO.Cnpj == null) return BadRequest("Cnpj não encontrado");
             if (!CnpjValidation.Validate(companyDTO.Cnpj))
                 return BadRequest("Cnpj Invalido");
 
